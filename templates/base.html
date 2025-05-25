@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Site de gestion de projet"/>
+    <meta name="author" content="Soriba Kebe"/>
+    <meta name="keywords" content="Gestion, Projet, temps"/>
+    <title>{% block title %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        .alert-error {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-left: 4px solid #dc2626;
+}
+
+.alert-success {
+    background-color: #dcfce7;
+    color: #166534;
+    border-left: 4px solid #16a34a;
+}
+    </style>
+</head>
+
+<body>
+<header class="bg-green-100 shadow-sm sticky top-0 z-50">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+        <!-- Logo -->
+        {% if session.user_id %}
+        <div class="flex lg:flex-1">
+            <a href="{{url_for('dashboard')}}" class="-m-1.5 p-1.5">
+                <span class="sr-only">Projx</span>
+                <span class="text-2xl font-bold text-green-700">Projx</span>
+            </a>
+        </div>
+            <!-- Navigation après connexion -->
+            <div class="hidden lg:flex lg:gap-x-12">
+                <a href="{{ url_for('dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Dashboard</a>
+                <a href="{{url_for('project')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Projects</a>
+                <a href="{{url_for('team')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Team</a>
+                <a href="{{url_for('task')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Task</a>
+                <a href="{{url_for('contact')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Contact</a>
+            </div>
+            <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
+                <a href="{{url_for('moncompte')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600 flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
+                        {{ session.prenom[0]|upper }}{{ session.nom[0]|upper }}
+                    </span>
+                    <span class="hidden sm:inline">{{ session.username }}</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="text-sm font-semibold leading-6 text-white bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg">
+                    Déconnexion
+                </a>
+            </div>
+        {% else %}
+            <!-- Navigation avant connexion -->
+        <div class="flex lg:flex-1">
+            <a href="{{url_for('index')}}" class="-m-1.5 p-1.5">
+                <span class="sr-only">Projx</span>
+                <span class="text-2xl font-bold text-green-700">Projx</span>
+            </a>
+        </div>
+            <div class="hidden lg:flex lg:gap-x-12">
+                <a href="#" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Accueil</a>
+                <a href="#" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Fonctionnalités</a>
+                <a href="#" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Tarifs</a>
+                <a href="#" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">À propos</a>
+            </div>
+
+            <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
+                <a href="{{ url_for('signIn') }}"
+                   class="text-sm font-semibold leading-6 text-green-700 hover:text-green-800 px-4 py-2 rounded-lg hover:bg-green-50">
+                    Connexion
+                </a>
+                <a href="{{ url_for('signUp') }}"
+                   class="text-sm font-semibold leading-6 text-white bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg">
+                    Inscription
+                </a>
+            </div>
+        {% endif %}
+    </nav>
+</header>
+    {% block content %}{% endblock %}
+<footer class="bg-white mt-12">
+    <div class="mx-auto max-w-7xl py-12 px-6 lg:px-8">
+        <p class="text-center text-xs text-gray-500">
+            &copy; 2025 Projx, Inc. Tous droits réservés.
+            <br>En cliquant sur "S'inscrire", vous acceptez que nous mangions des cookies (les vrais, pas ceux du web).
+            <br>Solution 100% végétale et sans OGM (ou presque).
+        </p>
+    </div>
+</footer>
+</body>
+</html>

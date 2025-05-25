@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Tâches - {{ project.name }} | Projx{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8">
+    <!-- Messages Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert-{{ category }} p-4 mb-6 rounded-lg">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-green-600">Tâches du projet</h1>
+            <h2 class="text-xl text-gray-700">{{ project.name }}</h2>
+        </div>
+        <button onclick="toggleModal()"
+                class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Nouvelle Tâche
+        </button>
+    </div>
+
+    <!-- Modal de création -->
+    <div id="createTaskModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Nouvelle Tâche</h3>
+                <button onclick="toggleModal()" class="text-gray-500 hover:text-gray-700">
+                    ✕
+                </button>
+            </div>
+
+            <form action="{{ url_for('create_task') }}" method="POST">
+                <input type="hidden" name="project_id" value="{{ project._id }}">
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="task_title" class="block text-sm font-medium text-gray-700">Titre</label>
+                        <input type="text" id="task_title" name="title" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                    </div>
+
+                    <div>
+                        <label for="task_description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="task_description" name="description" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="task_priority" class="block text-sm font-medium text-gray-700">Priorité</label>
+                            <select id="task_priority" name="priority"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                                <option value="faible">Faible</option>
+                                <option value="moyenne" selected>Moyenne</option>
+                                <option value="haute">Haute</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="task_due_date" class="block text-sm font-medium text-gray-700">Échéance</label>
+                            <input type="date" id="task_due_date" name="due_date"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="task_assignee" class="block text-sm font-medium text-gray-700">Assignée à</label>
+                        <select id="task_assignee" name="assigned_to" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
+                            {% for member in team_members %}
+                            <option value="{{ member._id }}">{{ member.prenom }} {{ member.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="toggleModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Créer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des tâches -->
+    <div class="space-y-4">
+        {% for task in tasks %}
+        <div class="bg-white rounded-lg shadow-md p-5 border-l-4
+                   {% if task.priority == 'haute' %}border-red-500
+                   {% elif task.priority == 'moyenne' %}border-yellow-500
+                   {% else %}border-green-500{% endif %}">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-lg font-medium">{{ task.title }}</h3>
+                    <p class="text-gray-600 text-sm mt-1">{{ task.description }}</p>
+
+                    <div class="mt-3 flex items-center space-x-4 text-sm">
+                        <div class="flex items-center">
+                            <svg class="h-4 w-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            {% set assigned_user = users.find_one({'_id': task.assigned_to}) %}
+                            <span>{{ assigned_user.prenom if assigned_user else 'Non assigné' }}</span>
+                        </div>
+
+                        <div class="flex items-center">
+                            <svg class="h-4 w-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span>{{ task.due_date|datetimeformat if task.due_date else 'Pas de date' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <form action="{{ url_for('update_task_status') }}" method="POST" class="flex items-center">
+                        <input type="hidden" name="project_id" value="{{ project._id }}">
+                        <input type="hidden" name="task_id" value="{{ task._id }}">
+
+                        <select name="status" onchange="this.form.submit()"
+                                class="text-xs rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500
+                                       {% if task.status == 'Terminé' %}bg-green-100 text-green-800
+                                       {% elif task.status == 'En cours' %}bg-blue-100 text-blue-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            <option value="À faire" {% if task.status == 'À faire' %}selected{% endif %}>À faire</option>
+                            <option value="En cours" {% if task.status == 'En cours' %}selected{% endif %}>En cours</option>
+                            <option value="Terminé" {% if task.status == 'Terminé' %}selected{% endif %}>Terminé</option>
+                        </select>
+                    </form>
+
+                    {% if task.assigned_to|string == session['user_id'] or task.created_by|string == session['user_id'] %}
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 bg-white rounded-lg shadow-sm">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"

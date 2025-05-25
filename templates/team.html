@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Équipes - Projx{% endblock %}
+
+{% block content %}
+<main class="container mx-auto px-4 py-8">
+    <!-- Messages Flash -->
+    <div class="mb-6">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert-{{ category }} p-4 mb-4 rounded-lg text-sm font-medium">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-green-600">Gestion des Équipes</h1>
+        <button onclick="document.getElementById('createTeamModal').classList.remove('hidden')"
+                class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Nouvelle Équipe
+        </button>
+    </div>
+
+    <!-- Modal de création d'équipe -->
+    <div id="createTeamModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Créer une nouvelle équipe</h3>
+                <button onclick="document.getElementById('createTeamModal').classList.add('hidden')"
+                        class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form action="{{ url_for('create_team') }}" method="POST">
+                <div class="space-y-4">
+                    <div>
+                        <label for="team_name" class="block text-sm font-medium text-gray-700 mb-1">Nom de l'équipe</label>
+                        <input type="text" id="team_name" name="name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+
+                    <div>
+                        <label for="team_description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="team_description" name="description" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Membres</label>
+                        <div class="space-y-2">
+                            {% for user in all_users %}
+                            <div class="flex items-center">
+                                <input type="checkbox" id="user_{{ user._id }}" name="members" value="{{ user._id }}"
+                                       class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                                <label for="user_{{ user._id }}" class="ml-2 text-sm text-gray-700">
+                                    {{ user.prenom }} {{ user.nom }} ({{ user.email }})
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('createTeamModal').classList.add('hidden')"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Créer l'équipe
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des équipes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for team in teams %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+            <div class="p-5">
+                <div class="flex justify-between items-start">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ team.name }}</h3>
+                    <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                        {% if team.created_by|string == session['user_id'] %}
+                        Chef d'équipe
+                        {% else %}
+                        Membre
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="text-gray-600 mb-4">{{ team.description }}</p>
+
+                <div class="border-t border-gray-200 pt-3">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Membres :</h4>
+                    <ul class="space-y-2">
+                        {% for member in team.members %}
+                        {% set user = users.find_one({'_id': member}) %}
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                <span class="text-green-600 font-medium">{{ user.prenom[0] }}{{ user.nom[0] }}</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">{{ user.prenom }} {{ user.nom }}</p>
+                                <p class="text-xs text-gray-500">{{ user.email }}</p>
+                            </div>
+                            {% if member == team.created_by %}
+                            <span class="ml-auto bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Chef</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-5 py-3 flex justify-end space-x-2">
+                {% if team.created_by|string == session['user_id'] %}
+                <button class="text-sm text-green-600 hover:text-green-800 font-medium">
+                    Modifier
+                </button>
+                <button class="text-sm text-red-600 hover:text-red-800 font-medium">
+                    Supprimer
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">Aucune équipe créée</h3>
+            <p class="mt-1 text-sm text-gray-500">Commencez par créer votre première équipe.</p>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+
+<script>
+    // Fermer le modal si on clique en dehors
+    window.onclick = function(event) {
+        const modal = document.getElementById('createTeamModal');
+        if (event.target === modal) {
+            modal.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}
