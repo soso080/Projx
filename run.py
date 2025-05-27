@@ -274,7 +274,7 @@ def create_team():
             "name": request.form.get('name').strip(),
             "description": request.form.get('description', '').strip(),
             "created_by": ObjectId(creator_id),
-            "chef": ObjectId(creator_id),  # Le créateur est chef par défaut
+            "chef": ObjectId(creator_id),
             "members": [ObjectId(member) for member in members],
             "created_at": datetime.now(UTC),
             "updated_at": datetime.now(UTC)
@@ -319,6 +319,53 @@ def search_users():
         user['_id'] = str(user['_id'])
 
     return jsonify(users_list)
+
+
+@app.route('/get_team_details')
+def get_team_details():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    team_id = request.args.get('team_id')
+    if not team_id:
+        return jsonify({"error": "ID d'équipe manquant"}), 400
+
+    try:
+        team = teams.find_one({"_id": ObjectId(team_id)})
+        if not team:
+            return jsonify({"error": "Équipe non trouvée"}), 404
+
+        # Récupérer les infos du chef
+        leader = users.find_one({"_id": team["chef"]})
+
+        # Récupérer les infos des membres
+        members = list(users.find({"_id": {"$in": team["members"]}}))
+
+        return jsonify({
+            "_id": str(team["_id"]),
+            "name": team["name"],
+            "description": team.get("description", ""),
+            "created_at": team["created_at"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "leader": {
+                "_id": str(leader["_id"]),
+                "prenom": leader["prenom"],
+                "nom": leader["nom"],
+                "username": leader["username"]
+            },
+            "members": [
+                {
+                    "_id": str(member["_id"]),
+                    "prenom": member["prenom"],
+                    "nom": member["nom"],
+                    "username": member["username"]
+                } for member in members
+            ]
+        })
+
+    except Exception as e:
+        app.logger.error(f"Erreur détails équipe: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
 @app.context_processor
 def inject_now():
     return {'now': datetime.now()}

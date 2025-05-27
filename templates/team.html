@@ -194,6 +194,58 @@
             }
         });
 
+        async function showTeamDetails(teamId) {
+            try {
+                // Récupérer les détails de l'équipe depuis le serveur
+                const response = await fetch(`/get_team_details?team_id=${teamId}`);
+                const team = await response.json();
+
+                // Remplir le modal avec les données
+                document.getElementById('teamDetailsTitle').textContent = team.name;
+                document.getElementById('teamDetailsDescription').textContent = team.description || "Aucune description";
+
+                // Formater la date de création
+                const createdAt = new Date(team.created_at);
+                document.getElementById('teamDetailsDate').textContent = createdAt.toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Afficher le chef d'équipe
+                const leaderElement = document.getElementById('teamDetailsLeader');
+                leaderElement.innerHTML = `
+                <span class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
+                    ${team.leader.prenom.charAt(0)}${team.leader.nom.charAt(0)}
+                </span>
+                <span>${team.leader.prenom} ${team.leader.nom} (${team.leader.username})</span>
+            `;
+
+                // Afficher les membres
+                const membersElement = document.getElementById('teamDetailsMembers');
+                membersElement.innerHTML = team.members.map(member => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center">
+                            ${member.prenom.charAt(0)}${member.nom.charAt(0)}
+                        </span>
+                        <span>${member.prenom} ${member.nom} (${member.username})</span>
+                    </div>
+                    ${member._id === team.leader._id ?
+                    '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">Chef</span>' : ''}
+                </div>
+            `).join('');
+
+                // Afficher le modal
+                document.getElementById('teamDetailsModal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert("Une erreur s'est produite lors du chargement des détails de l'équipe");
+            }
+        }
+
         // Gérer le clic sur un résultat
         searchResults.addEventListener('click', function(e) {
             const item = e.target.closest('[data-id]');
@@ -212,6 +264,7 @@
             memberSearch.value = '';
             searchResults.classList.add('hidden');
         });
+
 
         // Mettre à jour l'affichage des membres sélectionnés
         function updateSelectedMembersDisplay() {
