@@ -7,13 +7,13 @@
     <!-- Messages Flash -->
     <div class="mb-6">
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert-{{ category }} p-4 mb-4 rounded-lg text-sm font-medium">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert-{{ category }} p-4 mb-4 rounded-lg text-sm font-medium">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
     </div>
 
@@ -27,6 +27,64 @@
             </svg>
             Nouvelle Équipe
         </button>
+    </div>
+
+    <!-- Section Liste des équipes -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        {% if teams|length > 0 %}
+        <div class="divide-y divide-gray-200">
+            {% for team in teams %}
+            <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">{{ team.name }}</h3>
+                        {% if team.description %}
+                        <p class="mt-1 text-gray-600">{{ team.description }}</p>
+                        {% endif %}
+                        <div class="mt-3 flex items-center space-x-2">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                Chef: {{ users.find_one({"_id": team.chef}).prenom }} {{ users.find_one({"_id": team.chef}).nom }}
+                            </span>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                {{ team.members|length }} membre(s)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <a href="#" class="text-green-600 hover:text-green-800">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-blue-600 hover:text-blue-800">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">Aucune équipe</h3>
+            <p class="mt-1 text-gray-500">Vous n'avez pas encore créé ou rejoint d'équipe.</p>
+            <div class="mt-6">
+                <button onclick="document.getElementById('createTeamModal').classList.remove('hidden')"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Créer une équipe
+                </button>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Modal de création d'équipe -->
@@ -57,18 +115,21 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Membres</label>
-                        <div class="space-y-2">
-                            {% for user in all_users %}
-                            <div class="flex items-center">
-                                <input type="checkbox" id="user_{{ user._id }}" name="members" value="{{ user._id }}"
-                                       class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
-                                <label for="user_{{ user._id }}" class="ml-2 text-sm text-gray-700">
-                                    {{ user.prenom }} {{ user.nom }} ({{ user.email }})
-                                </label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ajouter des membres</label>
+                        <div class="relative">
+                            <input type="text" id="memberSearch" placeholder="Rechercher un membre..."
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <div id="searchResults" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md overflow-auto hidden">
+                                <!-- Les résultats apparaîtront ici -->
                             </div>
-                            {% endfor %}
                         </div>
+
+                        <div id="selectedMembers" class="mt-3 space-y-2">
+                            <!-- Les membres sélectionnés apparaîtront ici -->
+                        </div>
+
+                        <!-- Champ caché pour stocker les membres sélectionnés -->
+                        <input type="hidden" id="membersInput" name="members">
                     </div>
                 </div>
 
@@ -87,74 +148,96 @@
     </div>
 
     <!-- Liste des équipes -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for team in teams %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-300">
-            <div class="p-5">
-                <div class="flex justify-between items-start">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ team.name }}</h3>
-                    <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                        {% if team.created_by|string == session['user_id'] %}
-                        Chef d'équipe
-                        {% else %}
-                        Membre
-                        {% endif %}
-                    </span>
-                </div>
-                <p class="text-gray-600 mb-4">{{ team.description }}</p>
 
-                <div class="border-t border-gray-200 pt-3">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Membres :</h4>
-                    <ul class="space-y-2">
-                        {% for member in team.members %}
-                        {% set user = users.find_one({'_id': member}) %}
-                        <li class="flex items-center">
-                            <div class="flex-shrink-0 h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                                <span class="text-green-600 font-medium">{{ user.prenom[0] }}{{ user.nom[0] }}</span>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-gray-900">{{ user.prenom }} {{ user.nom }}</p>
-                                <p class="text-xs text-gray-500">{{ user.email }}</p>
-                            </div>
-                            {% if member == team.created_by %}
-                            <span class="ml-auto bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Chef</span>
-                            {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-            <div class="bg-gray-50 px-5 py-3 flex justify-end space-x-2">
-                {% if team.created_by|string == session['user_id'] %}
-                <button class="text-sm text-green-600 hover:text-green-800 font-medium">
-                    Modifier
-                </button>
-                <button class="text-sm text-red-600 hover:text-red-800 font-medium">
-                    Supprimer
-                </button>
-                {% endif %}
-            </div>
-        </div>
-        {% else %}
-        <div class="col-span-full text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-            </svg>
-            <h3 class="mt-2 text-lg font-medium text-gray-900">Aucune équipe créée</h3>
-            <p class="mt-1 text-sm text-gray-500">Commencez par créer votre première équipe.</p>
-        </div>
-        {% endfor %}
-    </div>
 </main>
 
 <script>
-    // Fermer le modal si on clique en dehors
-    window.onclick = function(event) {
-        const modal = document.getElementById('createTeamModal');
-        if (event.target === modal) {
-            modal.classList.add('hidden');
+    document.addEventListener('DOMContentLoaded', ()=> {
+        const memberSearch = document.getElementById('memberSearch');
+        const searchResults = document.getElementById('searchResults');
+        const selectedMembers = document.getElementById('selectedMembers');
+        const membersInput = document.getElementById('membersInput');
+
+        // Liste des membres sélectionnés (stockés comme {id, name})
+        let selectedMembersList = [];
+
+        // Recherche des membres
+        memberSearch.addEventListener('input', async (e)=> {
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/search_users?q=${encodeURIComponent(query)}`);
+                const users = await response.json();
+
+                // Afficher les résultats
+                if (users.length > 0) {
+                    searchResults.innerHTML = users.map(user => `
+                    <div class="p-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+                         data-id="${user._id}"
+                         data-name="${user.prenom} ${user.nom} (${user.username})">
+                        <span>${user.prenom} ${user.nom} (${user.username})</span>
+                        <button class="text-green-600 hover:text-green-800">Ajouter</button>
+                    </div>
+                `).join('');
+                    searchResults.classList.remove('hidden');
+                } else {
+                    searchResults.innerHTML = '<div class="p-2 text-gray-500">Aucun résultat</div>';
+                    searchResults.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Erreur recherche:', error);
+            }
+        });
+
+        // Gérer le clic sur un résultat
+        searchResults.addEventListener('click', function(e) {
+            const item = e.target.closest('[data-id]');
+            if (!item) return;
+
+            const userId = item.getAttribute('data-id');
+            const userName = item.getAttribute('data-name');
+
+            // Vérifier si déjà sélectionné
+            if (!selectedMembersList.some(m => m.id === userId)) {
+                selectedMembersList.push({ id: userId, name: userName });
+                updateSelectedMembersDisplay();
+            }
+
+            // Réinitialiser la recherche
+            memberSearch.value = '';
+            searchResults.classList.add('hidden');
+        });
+
+        // Mettre à jour l'affichage des membres sélectionnés
+        function updateSelectedMembersDisplay() {
+            selectedMembers.innerHTML = selectedMembersList.map(member => `
+            <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span>${member.name}</span>
+                <button class="text-red-500 hover:text-red-700 remove-member" data-id="${member.id}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        `).join('');
+
+            // Mettre à jour le champ caché
+            membersInput.value = JSON.stringify(selectedMembersList.map(m => m.id));
         }
-    }
+
+        // Supprimer un membre sélectionné
+        selectedMembers.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-member')) {
+                const memberId = e.target.getAttribute('data-id');
+                selectedMembersList = selectedMembersList.filter(m => m.id !== memberId);
+                updateSelectedMembersDisplay();
+            }
+        });
+    });
 </script>
 {% endblock %}
