@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Modifier Équipe - Projx{% endblock %}
+{% block title %}Modifier l'Équipe - Projx{% endblock %}
 
 {% block content %}
 <main class="container mx-auto px-4 py-8">
@@ -20,244 +20,338 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-green-600">Modifier l'Équipe</h1>
-        <a href="{{ url_for('team') }}" class="text-gray-600 hover:text-gray-800">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <a href="{{ url_for('team') }}" class="text-gray-600 hover:text-gray-800 flex items-center">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
+            Retour aux équipes
         </a>
     </div>
 
     <!-- Formulaire de modification -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <form action="{{ url_for('update_team', team_id=team._id) }}" method="POST">
-            <div class="space-y-4">
+    <div class="bg-white rounded-lg shadow overflow-hidden p-6 mb-8">
+        <form id="editTeamForm">
+            <div class="space-y-6">
                 <div>
-                    <label for="team_name" class="block text-sm font-medium text-gray-700 mb-1">Nom de l'équipe</label>
-                    <input type="text" id="team_name" name="name" value="{{ team.name }}" required
+                    <label for="edit_team_name" class="block text-sm font-medium text-gray-700 mb-1">Nom de l'équipe</label>
+                    <input type="text" id="edit_team_name" name="name" value="{{ team.name }}" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
                 </div>
 
                 <div>
-                    <label for="team_description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea id="team_description" name="description" rows="3"
+                    <label for="edit_team_description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="edit_team_description" name="description" rows="3"
                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">{{ team.description }}</textarea>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Membres de l'équipe</label>
+                <!-- Liste des membres actuels -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Membres de l'équipe</label>
+                    <div id="currentMembersList" class="space-y-2 mb-4">
+                        <!-- Les membres seront affichés ici dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Ajout de nouveaux membres -->
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ajouter de nouveaux membres</label>
                     <div class="relative">
-                        <input type="text" id="memberSearch" placeholder="Rechercher un membre..."
+                        <input type="text" id="edit_memberSearch" placeholder="Rechercher un membre..."
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-                        <div id="searchResults" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md overflow-auto hidden">
+                        <div id="edit_searchResults" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md overflow-auto hidden">
                             <!-- Les résultats apparaîtront ici -->
                         </div>
                     </div>
+                </div>
 
-                    <div id="selectedMembers" class="mt-3 space-y-2">
-                        <!-- Affiche les membres actuels -->
-                        {% for member in team.members %}
-                        {% if member|string != session['user_id'] %}
-                        {% set user = users.find_one({'_id': member}) %}
-                        <div class="flex items-center justify-between bg-gray-50 p-2 rounded" data-id="{{ member }}">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                                    <span class="text-green-600 font-medium">{{ user.prenom[0] }}{{ user.nom[0] }}</span>
-                                </div>
-                                <div>
-                                    <div class="font-medium text-sm">{{ user.prenom }} {{ user.nom }}</div>
-                                    <div class="text-xs text-gray-500">{{ user.email }}</div>
-                                </div>
-                            </div>
-                            <button type="button" class="text-red-500 hover:text-red-700 remove-member">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                            </button>
-                        </div>
-                        {% endif %}
-                        {% endfor %}
+                <!-- Nouveaux membres à ajouter -->
+                <div id="newMembersSection" class="mt-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nouveaux membres à ajouter</label>
+                    <div id="newMembersList" class="space-y-2">
+                        <!-- Les nouveaux membres sélectionnés apparaîtront ici -->
                     </div>
-
-                    <!-- Champ caché pour stocker les membres sélectionnés -->
-                    <input type="hidden" id="membersInput" name="members" value="{{ team.members|select('string')|reject('equalto', session['user_id'])|join(',') }}">
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end space-x-3">
-                <a href="{{ url_for('team') }}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Annuler
-                </a>
-                <button type="submit"
-                        class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Enregistrer
+            <div class="mt-8 flex justify-between">
+                <button type="button" id="deleteTeamBtn"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Supprimer l'équipe
                 </button>
+
+                <div class="space-x-3">
+                    <a href="{{ url_for('team') }}"
+                       class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Annuler
+                    </a>
+                    <button type="submit"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Enregistrer les modifications
+                    </button>
+                </div>
             </div>
         </form>
+    </div>
 
-        <!-- Bouton Supprimer -->
-        <div class="mt-8 pt-6 border-t border-gray-200">
-            <button onclick="confirmDelete()"
-                    class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                Supprimer l'équipe
-            </button>
+    <!-- Modal de confirmation de suppression -->
+    <div id="confirmDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Confirmer la suppression</h3>
+                <button onclick="document.getElementById('confirmDeleteModal').classList.add('hidden')"
+                        class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <p class="mb-6">Êtes-vous sûr de vouloir supprimer définitivement cette équipe ? Cette action est irréversible.</p>
+
+            <div class="flex justify-end space-x-3">
+                <button onclick="document.getElementById('confirmDeleteModal').classList.add('hidden')"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Annuler
+                </button>
+                <button id="confirmDeleteBtn"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Confirmer la suppression
+                </button>
+            </div>
         </div>
     </div>
 </main>
 
-<!-- Modal de confirmation de suppression -->
-<div id="confirmDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold text-gray-800">Confirmer la suppression</h3>
-            <button onclick="document.getElementById('confirmDeleteModal').classList.add('hidden')"
-                    class="text-gray-500 hover:text-gray-700">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-
-        <p class="mb-6">Êtes-vous sûr de vouloir supprimer cette équipe? Cette action est irréversible et supprimera aussi tous les projets associés.</p>
-
-        <div class="flex justify-end space-x-3">
-            <button onclick="document.getElementById('confirmDeleteModal').classList.add('hidden')"
-                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Annuler
-            </button>
-            <button onclick="deleteTeam()"
-                    class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                Confirmer
-            </button>
-        </div>
-    </div>
-</div>
-
 <script>
-    // Script pour la recherche et sélection des membres (similaire à team.html)
-    document.getElementById('memberSearch').addEventListener('input', function(e) {
-        const query = e.target.value.toLowerCase();
-        const resultsContainer = document.getElementById('searchResults');
+    document.addEventListener('DOMContentLoaded', () => {
+        const teamId = "{{ team._id }}";
+        const editTeamForm = document.getElementById('editTeamForm');
+        const deleteTeamBtn = document.getElementById('deleteTeamBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+        const currentMembersList = document.getElementById('currentMembersList');
+        const newMembersList = document.getElementById('newMembersList');
+        const newMembersSection = document.getElementById('newMembersSection');
 
-        if (query.length < 2) {
-            resultsContainer.classList.add('hidden');
-            return;
+        // Récupérer les détails des membres depuis le serveur
+        async function fetchMemberDetails(memberIds) {
+            try {
+                const response = await fetch(`/get_team_details?team_id=${teamId}`);
+                const teamDetails = await response.json();
+                return teamDetails.members || [];
+            } catch (error) {
+                console.error('Erreur lors de la récupération des membres:', error);
+                return [];
+            }
         }
 
-        // Filtrage côté client
-        const filteredUsers = [
-            {% for user in all_users %}
+        // Stocker les membres actuels et les modifications
+        let currentMembers = [
+            {% for member in member_details %}
         {
-            id: '{{ user._id }}',
-                name: '{{ user.prenom }} {{ user.nom }}',
-            email: '{{ user.email }}',
-            initials: '{{ user.prenom[0]|upper }}{{ user.nom[0]|upper }}'
+            id: "{{ member._id }}",
+                prenom: "{{ member.prenom }}",
+            nom: "{{ member.nom }}",
+            username: "{{ member.username }}"
         },
         {% endfor %}
-    ].filter(user =>
-            user.name.toLowerCase().includes(query) ||
-            user.email.toLowerCase().includes(query)
-        );
+    ];
+        let membersToRemove = [];
+        let newMembers = [];
+        let allMembersDetails = [];
 
-        if (filteredUsers.length > 0) {
-            resultsContainer.innerHTML = filteredUsers.map(user => `
-                <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center member-item"
-                     data-id="${user.id}" data-name="${user.name}" data-email="${user.email}" data-initials="${user.initials}">
-                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                        <span class="text-green-600 font-medium">${user.initials}</span>
+        // Fonction pour afficher les membres
+        async function renderMembersList() {
+            // Afficher les membres actuels (non supprimés)
+            const currentMembersDetails = allMembersDetails.filter(member =>
+                currentMembers.includes(member._id) &&
+                !membersToRemove.includes(member._id)
+            );
+
+            console.log("currentMembersDetails", currentMembersDetails);
+
+
+
+            currentMembersList.innerHTML = currentMembers.map(member => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                    <div class="flex items-center">
+                        <span class="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center mr-3">
+                            ${member.prenom[0]}${member.nom[0]}
+                        </span>
+                        <span>${member.prenom} ${member.nom} (${member.username})</span>
                     </div>
-                    <div>
-                        <div class="font-medium">${user.name}</div>
-                        <div class="text-xs text-gray-500">${user.email}</div>
-                    </div>
+                    <button class="remove-member text-red-600 hover:text-red-800 text-sm font-medium" data-id="${member._id}">
+                        Retirer
+                    </button>
                 </div>
             `).join('');
-            resultsContainer.classList.remove('hidden');
-        } else {
-            resultsContainer.innerHTML = '<div class="px-4 py-2 text-gray-500">Aucun résultat</div>';
-            resultsContainer.classList.remove('hidden');
-        }
-    });
 
-    // Gestion de la sélection
-    document.addEventListener('click', function(e) {
-        // Sélection d'un membre
-        if (e.target.closest('.member-item')) {
-            const memberItem = e.target.closest('.member-item');
-            const memberId = memberItem.dataset.id;
-            const selectedContainer = document.getElementById('selectedMembers');
-
-            // Vérifie si déjà sélectionné
-            if (!document.querySelector(`#selectedMembers [data-id="${memberId}"]`)) {
-                selectedContainer.innerHTML += `
-                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded" data-id="${memberId}">
+            // Afficher les nouveaux membres à ajouter
+            if (newMembers.length > 0) {
+                newMembersSection.classList.remove('hidden');
+                newMembersList.innerHTML = newMembers.map(member => `
+                    <div class="flex items-center justify-between p-2 bg-green-50 rounded-md">
                         <div class="flex items-center">
-                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                                <span class="text-green-600 font-medium">${memberItem.dataset.initials}</span>
-                            </div>
-                            <div>
-                                <div class="font-medium text-sm">${memberItem.dataset.name}</div>
-                                <div class="text-xs text-gray-500">${memberItem.dataset.email}</div>
-                            </div>
+                            <span class="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center mr-3">
+                                ${member.name.split(' ')[0][0]}${member.name.split(' ')[1][0]}
+                            </span>
+                            <span>${member.name}</span>
                         </div>
-                        <button type="button" class="text-red-500 hover:text-red-700 remove-member">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
+                        <button class="remove-member text-red-600 hover:text-red-800 text-sm font-medium" data-id="${member.id}">
+                            Annuler
                         </button>
                     </div>
-                `;
+                `).join('');
+            } else {
+                newMembersSection.classList.add('hidden');
+                newMembersList.innerHTML = '';
+            }
+        }
 
-                updateHiddenInput();
+        // Initialiser la page
+        async function initPage() {
+            allMembersDetails = await fetchMemberDetails(currentMembers);
+            renderMembersList();
+        }
+
+        initPage();
+
+        // Gérer la recherche de membres
+        const memberSearch = document.getElementById('edit_memberSearch');
+        const searchResults = document.getElementById('edit_searchResults');
+
+        memberSearch.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
             }
 
-            document.getElementById('memberSearch').value = '';
-            document.getElementById('searchResults').classList.add('hidden');
-        }
+            try {
+                const response = await fetch(`/search_users?q=${encodeURIComponent(query)}`);
+                const users = await response.json();
 
-        // Suppression d'un membre
-        if (e.target.closest('.remove-member')) {
-            const memberDiv = e.target.closest('[data-id]');
-            memberDiv.remove();
-            updateHiddenInput();
-        }
-    });
+                // Filtrer les membres déjà dans l'équipe
+                const filteredUsers = users.filter(user =>
+                    !currentMembers.includes(user._id) &&
+                    !newMembers.some(m => m.id === user._id)
+                );
 
-    // Mise à jour du champ caché
-    function updateHiddenInput() {
-        const selectedIds = Array.from(document.querySelectorAll('#selectedMembers [data-id]'))
-            .map(el => el.dataset.id);
-        document.getElementById('membersInput').value = selectedIds.join(',');
-    }
-
-    // Fermer les résultats si on clique ailleurs
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('#memberSearch') && !e.target.closest('#searchResults')) {
-            document.getElementById('searchResults').classList.add('hidden');
-        }
-    });
-
-    // Suppression de l'équipe
-    function confirmDelete(teamId) {
-        if (confirm("Êtes-vous sûr de vouloir supprimer cette équipe? Cette action supprimera aussi tous les projets associés.")) {
-            fetch(`/delete_team/${teamId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
+                // Afficher les résultats
+                if (filteredUsers.length > 0) {
+                    searchResults.innerHTML = filteredUsers.map(user => `
+                        <div class="p-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+                             data-id="${user._id}"
+                             data-name="${user.prenom} ${user.nom} (${user.username})">
+                            <span>${user.prenom} ${user.nom} (${user.username})</span>
+                            <button class="text-green-600 hover:text-green-800">Ajouter</button>
+                        </div>
+                    `).join('');
+                    searchResults.classList.remove('hidden');
+                } else {
+                    searchResults.innerHTML = '<div class="p-2 text-gray-500">Aucun résultat</div>';
+                    searchResults.classList.remove('hidden');
                 }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = data.redirect;
-                    } else {
-                        alert(data.message || "Erreur lors de la suppression");
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("Une erreur s'est produite");
+            } catch (error) {
+                console.error('Erreur recherche:', error);
+            }
+        });
+
+        // Gérer l'ajout de nouveaux membres
+        searchResults.addEventListener('click', function(e) {
+            const item = e.target.closest('[data-id]');
+            if (!item) return;
+
+            const userId = item.getAttribute('data-id');
+            const userName = item.getAttribute('data-name');
+
+            // Ajouter aux nouveaux membres
+            if (!newMembers.some(m => m.id === userId)) {
+                newMembers.push({ id: userId, name: userName });
+                renderMembersList();
+            }
+
+            // Réinitialiser la recherche
+            memberSearch.value = '';
+            searchResults.classList.add('hidden');
+        });
+
+        // Gérer la suppression de membres
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-member')) {
+                const memberId = e.target.getAttribute('data-id');
+
+                // Si c'est un membre existant, l'ajouter à la liste de suppression
+                if (currentMembers.includes(memberId)) {
+                    membersToRemove.push(memberId);
+                }
+                // Si c'est un nouveau membre, le retirer de la liste
+                else {
+                    newMembers = newMembers.filter(m => m.id !== memberId);
+                }
+
+                renderMembersList();
+            }
+        });
+
+        // Envoyer le formulaire de modification
+        editTeamForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('edit_team_name').value,
+                description: document.getElementById('edit_team_description').value,
+                membersToRemove: membersToRemove,
+                newMembers: newMembers.map(m => m.id)
+            };
+
+            try {
+                const response = await fetch(`/update_team/${teamId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
                 });
-        }
-    }
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = "{{ url_for('team') }}?success=1";
+                } else {
+                    alert(result.error || "Erreur lors de la mise à jour de l'équipe");
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Erreur technique lors de la mise à jour");
+            }
+        });
+
+        // Gérer la suppression de l'équipe
+        deleteTeamBtn.addEventListener('click', () => {
+            confirmDeleteModal.classList.remove('hidden');
+        });
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch(`/delete_team/${teamId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    window.location.href = "{{ url_for('team') }}?deleted=1";
+                } else {
+                    const result = await response.json();
+                    alert(result.error || "Erreur lors de la suppression");
+                    confirmDeleteModal.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Erreur technique lors de la suppression");
+                confirmDeleteModal.classList.add('hidden');
+            }
+        });
+    });
 </script>
 {% endblock %}

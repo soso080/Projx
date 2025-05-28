@@ -126,6 +126,21 @@ def task():
                            tasks=project.get('tasks', []),
                            team_members=team_members)
 
+@app.route('/edit_team/<team_id>')
+def edit_team(team_id):
+    member = None
+    if 'user_id' not in session:
+        return redirect(url_for('signIn'))
+
+    team = teams.find_one({"_id": ObjectId(team_id)})
+
+    if not team:
+        flash("Équipe non trouvée", 'error')
+        return redirect(url_for('team'))
+
+    return render_template("edit_team.html", team=team, member=member)
+
+
 @app.route('/moncompte')
 def moncompte():
     if 'user_id' not in session:
@@ -198,6 +213,8 @@ def register():
             app.logger.error(f"Erreur inscription: {str(e)}")
             flash("Erreur technique", 'error')
             return redirect(url_for('signUp'))
+
+
 
 
 @app.route('/login', methods=['POST'])
@@ -321,6 +338,100 @@ def search_users():
     return jsonify(users_list)
 
 
+@app.route('/update_team/<team_id>', methods=['PUT'])
+def update_team(team_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        # 1. Vérifier que l'équipe existe et que l'utilisateur est autorisé
+        team = teams.find_one({"_id": ObjectId(team_id)})
+        if not team:
+            return jsonify({"error": "Équipe non trouvée"}), 404
+
+        # Seul le créateur ou le chef peut modifier l'équipe
+        creator_id = team.get("created_by")
+        current_leader_id = team.get("chef")
+        user_id = ObjectId(session['user_id'])
+
+        if user_id not in [creator_id, current_leader_id]:
+            return jsonify({"error": "Action non autorisée"}), 403
+
+        # 2. Récupérer les données du formulaire
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Données manquantes"}), 400
+
+        # 3. Préparer les mises à jour
+        updates = {
+            "name": data.get("name", team["name"]).strip(),
+            "description": data.get("description", team.get("description", "")).strip(),
+            "chef": ObjectId(data.get("chef", team["chef"])),
+            "updated_at": datetime.now(UTC)
+        }
+
+        # Validation du nom
+        if not updates["name"]:
+            return jsonify({"error": "Le nom de l'équipe est obligatoire"}), 400
+
+        # 4. Gérer les membres (ajouts et suppressions)
+        current_members = set(team["members"])
+        members_to_remove = set(ObjectId(m) for m in data.get("membersToRemove", []))
+        new_members = set(ObjectId(m) for m in data.get("newMembers", []))
+
+        # Vérifier que le nouveau chef est toujours membre
+        if updates["chef"] not in (current_members - members_to_remove | new_members):
+            return jsonify({"error": "Le chef doit être membre de l'équipe"}), 400
+
+        # Mettre à jour la liste des membres
+        updated_members = list((current_members - members_to_remove) | new_members)
+        updates["members"] = updated_members
+
+        # 5. Appliquer les modifications dans MongoDB
+        teams.update_one(
+            {"_id": ObjectId(team_id)},
+            {"$set": updates}
+        )
+
+        return jsonify({"success": True, "message": "Équipe mise à jour avec succès"})
+
+    except Exception as e:
+        app.logger.error(f"Erreur mise à jour équipe: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
+
+@app.route('/delete_team/<team_id>', methods=['DELETE'])
+def delete_team(team_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        # Vérifier que l'équipe existe
+        team = teams.find_one({"_id": ObjectId(team_id)})
+        if not team:
+            return jsonify({"error": "Équipe non trouvée"}), 404
+
+        # Seul le créateur peut supprimer l'équipe
+        creator_id = team.get("created_by")
+        user_id = ObjectId(session['user_id'])
+
+        if user_id != creator_id:
+            return jsonify({"error": "Action non autorisée"}), 403
+
+        # Supprimer l'équipe
+        result = teams.delete_one({"_id": ObjectId(team_id)})
+
+        if result.deleted_count == 1:
+            # Supprimer aussi tous les projets associés à cette équipe
+            projects.delete_many({"team_id": ObjectId(team_id)})
+            return jsonify({"success": True, "message": "Équipe supprimée avec succès"})
+        else:
+            return jsonify({"error": "Échec de la suppression"}), 500
+
+    except Exception as e:
+        app.logger.error(f"Erreur suppression équipe: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
 @app.route('/get_team_details')
 def get_team_details():
     if 'user_id' not in session:
@@ -341,26 +452,11 @@ def get_team_details():
         # Récupérer les infos des membres
         members = list(users.find({"_id": {"$in": team["members"]}}))
 
-        return jsonify({
-            "_id": str(team["_id"]),
-            "name": team["name"],
-            "description": team.get("description", ""),
-            "created_at": team["created_at"].strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "leader": {
-                "_id": str(leader["_id"]),
-                "prenom": leader["prenom"],
-                "nom": leader["nom"],
-                "username": leader["username"]
-            },
-            "members": [
-                {
-                    "_id": str(member["_id"]),
-                    "prenom": member["prenom"],
-                    "nom": member["nom"],
-                    "username": member["username"]
-                } for member in members
-            ]
-        })
+        team['_id'] = str(team['_id'])
+        team['leader'] = users.find_one({"_id": team['chef']})
+        team['members'] = list(users.find({"_id": {"$in": team['members']}}))
+
+        return jsonify(team)
 
     except Exception as e:
         app.logger.error(f"Erreur détails équipe: {str(e)}")
