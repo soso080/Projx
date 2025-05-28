@@ -51,12 +51,12 @@
                         </div>
                     </div>
                     <div class="flex space-x-2">
-                        <a href="#" class="text-green-600 hover:text-green-800">
+                        <button onclick="showTeamDetails('{{ team._id }}')" class="text-green-600 hover:text-green-800">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
-                        </a>
+                        </button>
                         <a href="{{url_for('edit_team', team_id=team._id)}}" class="text-blue-600 hover:text-blue-800">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -147,8 +147,55 @@
         </div>
     </div>
 
-    <!-- Liste des équipes -->
+    <!-- Modal de détails de l'équipe -->
+    <div id="teamDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800" id="teamModalTitle">Détails de l'équipe</h3>
+                <button onclick="document.getElementById('teamDetailsModal').classList.add('hidden')"
+                        class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
 
+            <div id="teamDetailsContent">
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-lg font-semibold" id="teamName"></h4>
+                        <p class="text-gray-600" id="teamDescription"></p>
+                    </div>
+
+                    <div>
+                        <h5 class="font-medium text-gray-700 mb-2">Chef d'équipe:</h5>
+                        <div class="flex items-center space-x-2" id="teamLeader">
+                            <!-- Le chef sera affiché ici -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <h5 class="font-medium text-gray-700 mb-2">Date de création:</h5>
+                        <p class="text-gray-600" id="teamCreatedAt"></p>
+                    </div>
+
+                    <div>
+                        <h5 class="font-medium text-gray-700 mb-2">Membres (<span id="membersCount">0</span>):</h5>
+                        <div class="space-y-2" id="teamMembersList">
+                            <!-- Les membres seront affichés ici -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="document.getElementById('teamDetailsModal').classList.add('hidden')"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
 </main>
 
 <script>
@@ -213,7 +260,6 @@
             searchResults.classList.add('hidden');
         });
 
-
         // Mettre à jour l'affichage des membres sélectionnés
         function updateSelectedMembersDisplay() {
             selectedMembers.innerHTML = selectedMembersList.map(member => `
@@ -240,5 +286,60 @@
             }
         });
     });
+
+    // Afficher les détails d'une équipe
+    async function showTeamDetails(teamId) {
+        try {
+            // Afficher un loader pendant le chargement
+            document.getElementById('teamDetailsContent').innerHTML = `
+                <div class="flex justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                </div>
+            `;
+
+            // Afficher la modal
+            document.getElementById('teamDetailsModal').classList.remove('hidden');
+
+            // Récupérer les données de l'équipe
+            const response = await fetch(`/get_team_details?team_id=${teamId}`);
+            const team = await response.json();
+
+            // Remplir la modal avec les données
+            document.getElementById('teamModalTitle').textContent = `Détails: ${team.name}`;
+            document.getElementById('teamName').textContent = team.name;
+            document.getElementById('teamDescription').textContent = team.description || "Aucune description";
+            document.getElementById('teamCreatedAt').textContent = new Date(team.created_at).toLocaleString();
+
+            // Afficher le chef
+            const leaderDiv = document.getElementById('teamLeader');
+            leaderDiv.innerHTML = `
+                <span class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
+                    ${team.leader.prenom[0]}${team.leader.nom[0]}
+                </span>
+                <span>${team.leader.prenom} ${team.leader.nom} (${team.leader.username})</span>
+            `;
+
+            // Afficher les membres
+            const membersList = document.getElementById('teamMembersList');
+            membersList.innerHTML = team.members.map(member => `
+                <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                    <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                        ${member.prenom[0]}${member.nom[0]}
+                    </span>
+                    <span>${member.prenom} ${member.nom} (${member.username})</span>
+                </div>
+            `).join('');
+
+            document.getElementById('membersCount').textContent = team.members.length;
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            document.getElementById('teamDetailsContent').innerHTML = `
+                <div class="text-red-500 p-4">
+                    Erreur lors du chargement des détails de l'équipe.
+                </div>
+            `;
+        }
+    }
 </script>
 {% endblock %}

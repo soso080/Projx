@@ -127,8 +127,8 @@ def task():
                            team_members=team_members)
 
 @app.route('/edit_team/<team_id>')
+@app.route('/edit_team/<team_id>')
 def edit_team(team_id):
-    member = None
     if 'user_id' not in session:
         return redirect(url_for('signIn'))
 
@@ -138,7 +138,12 @@ def edit_team(team_id):
         flash("Équipe non trouvée", 'error')
         return redirect(url_for('team'))
 
-    return render_template("edit_team.html", team=team, member=member)
+    # Récupérer les détails des membres
+    member_details = list(users.find({"_id": {"$in": team['members']}}))
+
+    return render_template("edit_team.html",
+                           team=team,
+                           member_details=member_details)
 
 
 @app.route('/moncompte')

@@ -133,18 +133,6 @@
         const newMembersList = document.getElementById('newMembersList');
         const newMembersSection = document.getElementById('newMembersSection');
 
-        // Récupérer les détails des membres depuis le serveur
-        async function fetchMemberDetails(memberIds) {
-            try {
-                const response = await fetch(`/get_team_details?team_id=${teamId}`);
-                const teamDetails = await response.json();
-                return teamDetails.members || [];
-            } catch (error) {
-                console.error('Erreur lors de la récupération des membres:', error);
-                return [];
-            }
-        }
-
         // Stocker les membres actuels et les modifications
         let currentMembers = [
             {% for member in member_details %}
@@ -153,38 +141,31 @@
                 prenom: "{{ member.prenom }}",
             nom: "{{ member.nom }}",
             username: "{{ member.username }}"
-        },
+        }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
+
         let membersToRemove = [];
         let newMembers = [];
-        let allMembersDetails = [];
 
         // Fonction pour afficher les membres
-        async function renderMembersList() {
+        function renderMembersList() {
             // Afficher les membres actuels (non supprimés)
-            const currentMembersDetails = allMembersDetails.filter(member =>
-                currentMembers.includes(member._id) &&
-                !membersToRemove.includes(member._id)
-            );
-
-            console.log("currentMembersDetails", currentMembersDetails);
-
-
-
-            currentMembersList.innerHTML = currentMembers.map(member => `
-                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                    <div class="flex items-center">
-                        <span class="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center mr-3">
-                            ${member.prenom[0]}${member.nom[0]}
-                        </span>
-                        <span>${member.prenom} ${member.nom} (${member.username})</span>
+            currentMembersList.innerHTML = currentMembers
+                .filter(member => !membersToRemove.includes(member.id))
+                .map(member => `
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                        <div class="flex items-center">
+                            <span class="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center mr-3">
+                                ${member.prenom[0]}${member.nom[0]}
+                            </span>
+                            <span>${member.prenom} ${member.nom} (${member.username})</span>
+                        </div>
+                        <button class="remove-member text-red-600 hover:text-red-800 text-sm font-medium" data-id="${member.id}">
+                            Retirer
+                        </button>
                     </div>
-                    <button class="remove-member text-red-600 hover:text-red-800 text-sm font-medium" data-id="${member._id}">
-                        Retirer
-                    </button>
-                </div>
-            `).join('');
+                `).join('');
 
             // Afficher les nouveaux membres à ajouter
             if (newMembers.length > 0) {
@@ -193,9 +174,9 @@
                     <div class="flex items-center justify-between p-2 bg-green-50 rounded-md">
                         <div class="flex items-center">
                             <span class="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center mr-3">
-                                ${member.name.split(' ')[0][0]}${member.name.split(' ')[1][0]}
+                                ${member.prenom[0]}${member.nom[0]}
                             </span>
-                            <span>${member.name}</span>
+                            <span>${member.prenom} ${member.nom} (${member.username})</span>
                         </div>
                         <button class="remove-member text-red-600 hover:text-red-800 text-sm font-medium" data-id="${member.id}">
                             Annuler
@@ -209,12 +190,7 @@
         }
 
         // Initialiser la page
-        async function initPage() {
-            allMembersDetails = await fetchMemberDetails(currentMembers);
-            renderMembersList();
-        }
-
-        initPage();
+        renderMembersList();
 
         // Gérer la recherche de membres
         const memberSearch = document.getElementById('edit_memberSearch');
@@ -234,7 +210,7 @@
 
                 // Filtrer les membres déjà dans l'équipe
                 const filteredUsers = users.filter(user =>
-                    !currentMembers.includes(user._id) &&
+                    !currentMembers.some(m => m.id === user._id) &&
                     !newMembers.some(m => m.id === user._id)
                 );
 
@@ -243,7 +219,9 @@
                     searchResults.innerHTML = filteredUsers.map(user => `
                         <div class="p-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
                              data-id="${user._id}"
-                             data-name="${user.prenom} ${user.nom} (${user.username})">
+                             data-prenom="${user.prenom}"
+                             data-nom="${user.nom}"
+                             data-username="${user.username}">
                             <span>${user.prenom} ${user.nom} (${user.username})</span>
                             <button class="text-green-600 hover:text-green-800">Ajouter</button>
                         </div>
@@ -264,11 +242,18 @@
             if (!item) return;
 
             const userId = item.getAttribute('data-id');
-            const userName = item.getAttribute('data-name');
+            const userPrenom = item.getAttribute('data-prenom');
+            const userNom = item.getAttribute('data-nom');
+            const userUsername = item.getAttribute('data-username');
 
             // Ajouter aux nouveaux membres
             if (!newMembers.some(m => m.id === userId)) {
-                newMembers.push({ id: userId, name: userName });
+                newMembers.push({
+                    id: userId,
+                    prenom: userPrenom,
+                    nom: userNom,
+                    username: userUsername
+                });
                 renderMembersList();
             }
 
@@ -283,7 +268,7 @@
                 const memberId = e.target.getAttribute('data-id');
 
                 // Si c'est un membre existant, l'ajouter à la liste de suppression
-                if (currentMembers.includes(memberId)) {
+                if (currentMembers.some(m => m.id === memberId)) {
                     membersToRemove.push(memberId);
                 }
                 // Si c'est un nouveau membre, le retirer de la liste
