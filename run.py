@@ -437,6 +437,7 @@ def delete_team(team_id):
         app.logger.error(f"Erreur suppression équipe: {str(e)}")
         return jsonify({"error": "Erreur serveur"}), 500
 
+
 @app.route('/get_team_details')
 def get_team_details():
     if 'user_id' not in session:
@@ -451,15 +452,35 @@ def get_team_details():
         if not team:
             return jsonify({"error": "Équipe non trouvée"}), 404
 
+        # Convertir ObjectId en string pour JSON
+        team['_id'] = str(team['_id'])
+        team['created_by'] = str(team['created_by'])
+        team['chef'] = str(team['chef'])
+
+        # Convertir les ObjectId des membres
+        team['members'] = [str(member) for member in team['members']]
+
         # Récupérer les infos du chef
-        leader = users.find_one({"_id": team["chef"]})
+        leader = users.find_one({"_id": ObjectId(team['chef'])})
+        if leader:
+            leader['_id'] = str(leader['_id'])
+            team['leader'] = {
+                '_id': leader['_id'],
+                'nom': leader['nom'],
+                'prenom': leader['prenom'],
+                'username': leader['username']
+            }
 
         # Récupérer les infos des membres
-        members = list(users.find({"_id": {"$in": team["members"]}}))
-
-        team['_id'] = str(team['_id'])
-        team['leader'] = users.find_one({"_id": team['chef']})
-        team['members'] = list(users.find({"_id": {"$in": team['members']}}))
+        members = list(users.find({"_id": {"$in": [ObjectId(id) for id in team['members']]}}))
+        team['members'] = []
+        for member in members:
+            team['members'].append({
+                '_id': str(member['_id']),
+                'nom': member['nom'],
+                'prenom': member['prenom'],
+                'username': member['username']
+            })
 
         return jsonify(team)
 
