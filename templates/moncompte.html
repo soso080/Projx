@@ -1,7 +1,95 @@
 {% extends "base.html" %}
 
-{% block title %}Mon compte - Projx{% endblock %}
+{% block title %}Mon Compte - Projx{% endblock %}
 
 {% block content %}
+<main class="container mx-auto px-4 py-8">
+    <!-- Messages Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert-{{ category }} p-4 mb-6 rounded-lg">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
 
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- En-tête -->
+        <div class="bg-green-600 py-4 px-6">
+            <h1 class="text-2xl font-bold text-white">Mon Compte</h1>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="p-6">
+            <form action="{{ url_for('update_account') }}" method="POST">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Nom -->
+                    <div>
+                        <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                        <input type="text" id="nom" name="nom" value="{{ session.get('nom', '') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+
+                    <!-- Prénom -->
+                    <div>
+                        <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                        <input type="text" id="prenom" name="prenom" value="{{ session.get('prenom', '') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+
+                    <!-- Nom d'utilisateur -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
+                        <input type="text" id="username" name="username" value="{{ session.get('username', '') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="email" name="email" value="{{ session.get('user_email', '') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+
+                <!-- Section changement de mot de passe -->
+                <div class="border-t border-gray-200 pt-6 mb-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Changer le mot de passe</h2>
+
+                    <!-- Mot de passe actuel -->
+                    <div class="mb-4">
+                        <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe actuel</label>
+                        <input type="password" id="current_password" name="current_password"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+
+                    <!-- Nouveau mot de passe -->
+                    <div class="mb-4">
+                        <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe</label>
+                        <input type="password" id="new_password" name="new_password"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Minimum 8 caractères</p>
+                    </div>
+
+                    <!-- Confirmation nouveau mot de passe -->
+                    <div class="mb-4">
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">Confirmer le nouveau mot de passe</label>
+                        <input type="password" id="confirm_password" name="confirm_password"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+
+                <!-- Bouton de soumission -->
+                <div class="flex justify-end">
+                    <button type="submit"
+                            class="px-6 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
 {% endblock %}

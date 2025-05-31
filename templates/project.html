@@ -17,140 +17,336 @@
 
     <!-- Header -->
     <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-green-600">Vos Projets</h1>
-        <button onclick="toggleModal()"
+        <h1 class="text-3xl font-bold text-green-600">Gestion des Projets</h1>
+        <button onclick="document.getElementById('createProjectModal').classList.remove('hidden')"
                 class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
             Nouveau Projet
         </button>
     </div>
 
-    <!-- Modal de création -->
-    <div id="createProjectModal"
-         class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">Nouveau Projet</h3>
-                <button onclick="toggleModal()" class="text-gray-500 hover:text-gray-700">
-                    ✕
-                </button>
-            </div>
-
-            <form action="{{ url_for('create_project') }}" method="POST">
-                <div class="space-y-4">
-                    <div>
-                        <label for="project_name" class="block text-sm font-medium text-gray-700">Nom du projet</label>
-                        <input type="text" id="project_name" name="name" required
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                    </div>
-
-                    <div>
-                        <label for="project_description"
-                               class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea id="project_description" name="description" rows="3"
-                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border"></textarea>
-                    </div>
-
-                    <div>
-                        <label for="project_team" class="block text-sm font-medium text-gray-700">Équipe
-                            assignée</label>
-                        <select id="project_team" name="team_id" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 p-2 border">
-                            <option value="">Sélectionnez une équipe</option>
-                            {% for team in teams %}
-                            <option value="{{ team._id }}">{{ team.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="toggleModal()"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                        Annuler
-                    </button>
-                    <button type="submit"
-                            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-                        Créer
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Liste des projets -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for project in projects %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
-            <div class="p-5">
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        {% if projects|length > 0 %}
+        <div class="divide-y divide-gray-200">
+            {% for project in projects %}
+            <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
                 <div class="flex justify-between items-start">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ project.name }}</h3>
-                    <span class="px-2 py-1 text-xs rounded-full
-                              {% if project.status == 'Terminé' %}bg-green-100 text-green-800
-                              {% elif project.status == 'En retard' %}bg-red-100 text-red-800
-                              {% else %}bg-blue-100 text-blue-800{% endif %}">
-                        {{ project.status }}
-                    </span>
-                </div>
-
-                <p class="text-gray-600 mb-4">{{ project.description }}</p>
-
-                <div class="border-t border-gray-200 pt-3">
-                    <div class="flex items-center justify-between text-sm">
-                        <div>
-                            <p class="text-gray-500">Équipe:</p>
-                            <p class="font-medium">
-                                {{ project.team_details.name if project.team_details else "Non assigné" }}
-                            </p>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-4">
+                            <h3 class="text-lg font-semibold text-gray-800">{{ project.name }}</h3>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full
+                                {% if project.status == 'active' %}bg-green-100 text-green-800
+                                {% elif project.status == 'completed' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ 'Actif' if project.status == 'active' else 'Terminé' if project.status == 'completed' else 'En attente' }}
+                            </span>
                         </div>
-                        <div>
-                            <p class="text-gray-500">Tâches:</p>
-                            <p class="font-medium">{{ project.tasks|length }}</p>
+
+                        {% if project.description %}
+                        <p class="mt-2 text-gray-600">{{ project.description }}</p>
+                        {% endif %}
+
+                        <div class="mt-4 flex flex-wrap items-center gap-3">
+                            <span class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                {{ project.start_date.strftime('%d/%m/%Y') if project.start_date else 'Non défini' }} -
+                                {{ project.end_date.strftime('%d/%m/%Y') if project.end_date else 'Non défini' }}
+                            </span>
+
+                            <span class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                {{ project.team_details.name }}
+                            </span>
+
+                            <span class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                {{ project.tasks|length if project.tasks else 0 }} tâche(s)
+                            </span>
                         </div>
+                    </div>
+
+                    <div class="flex space-x-2">
+                        <a href="{{ url_for('task', project_id=project._id) }}" class="text-green-600 hover:text-green-800" title="Voir les tâches">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </a>
+
+                        <button onclick="showProjectDetails('{{ project._id }}')" class="text-blue-600 hover:text-blue-800" title="Détails">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+
+                        <a href="{{ url_for('edit_project', project_id=project._id) }}" class="text-yellow-600 hover:text-yellow-800" title="Modifier">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </a>
                     </div>
                 </div>
             </div>
-
-            <div class="bg-gray-50 px-5 py-3 flex justify-between">
-                <a href="{{ url_for('task', project_id=project._id) }}"
-                   class="text-green-600 hover:text-green-800 font-medium text-sm">
-                    Voir les tâches →
-                </a>
-                {% if project.created_by|string == session['user_id'] %}
-                <div class="space-x-3">
-                    <button class="text-blue-600 hover:text-blue-800 text-sm">Modifier</button>
-                    <button class="text-red-600 hover:text-red-800 text-sm">Supprimer</button>
-                </div>
-                {% endif %}
-            </div>
+            {% endfor %}
         </div>
         {% else %}
-        <div class="col-span-full text-center py-12">
+        <div class="text-center py-12">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <h3 class="mt-2 text-lg font-medium text-gray-900">Aucun projet créé</h3>
-            <p class="mt-1 text-sm text-gray-500">Commencez par créer votre premier projet.</p>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">Aucun projet</h3>
+            <p class="mt-1 text-gray-500">Vous n'avez pas encore créé ou rejoint de projet.</p>
+            <div class="mt-6">
+                <button onclick="document.getElementById('createProjectModal').classList.remove('hidden')"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Créer un projet
+                </button>
+            </div>
         </div>
-        {% endfor %}
+        {% endif %}
     </div>
 </main>
 
-<script>
-    function toggleModal() {
-        const modal = document.getElementById('createProjectModal');
-        modal.classList.toggle('hidden');
-    }
+<!-- Modal de création de projet -->
+<div id="createProjectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Créer un nouveau projet</h3>
+            <button onclick="document.getElementById('createProjectModal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
 
-    // Fermer le modal si on clique en dehors
-    window.onclick = function(event) {
-        const modal = document.getElementById('createProjectModal');
-        if (event.target === modal) {
-            modal.classList.add('hidden');
+        <form action="{{ url_for('create_project') }}" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label for="project_name" class="block text-sm font-medium text-gray-700 mb-1">Nom du projet*</label>
+                    <input type="text" id="project_name" name="name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+
+                <div>
+                    <label for="project_description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="project_description" name="description" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+
+                <div>
+                    <label for="project_team" class="block text-sm font-medium text-gray-700 mb-1">Équipe*</label>
+                    <select id="project_team" name="team_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Sélectionner une équipe</option>
+                        {% for team in teams %}
+                        <option value="{{ team._id }}">{{ team.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="project_start_date" class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+                        <input type="date" id="project_start_date" name="start_date"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="project_end_date" class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+                        <input type="date" id="project_end_date" name="end_date"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="project_status" class="block text-sm font-medium text-gray-700 mb-1">Statut*</label>
+                    <select id="project_status" name="status" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="active" selected>Actif</option>
+                        <option value="pending">En attente</option>
+                        <option value="completed">Terminé</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('createProjectModal').classList.add('hidden')"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Annuler
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Créer le projet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de détails du projet -->
+<div id="projectDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800" id="projectModalTitle">Détails du projet</h3>
+            <button onclick="closeProjectModal()"
+                    class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="projectDetailsContent">
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-lg font-semibold" id="projectName"></h4>
+                    <p class="text-gray-600" id="projectDescription"></p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h5 class="font-medium text-gray-700 mb-2">Dates:</h5>
+                        <div class="space-y-1">
+                            <p class="text-gray-600"><span class="font-medium">Début:</span> <span id="projectStartDate"></span></p>
+                            <p class="text-gray-600"><span class="font-medium">Fin:</span> <span id="projectEndDate"></span></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h5 class="font-medium text-gray-700 mb-2">Statut:</h5>
+                        <p class="text-gray-600">
+                            <span id="projectStatus" class="px-2 py-1 text-xs font-medium rounded-full"></span>
+                        </p>
+                    </div>
+
+                    <div>
+                        <h5 class="font-medium text-gray-700 mb-2">Équipe:</h5>
+                        <div class="flex items-center space-x-2" id="projectTeam">
+                            <!-- L'équipe sera affichée ici -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <h5 class="font-medium text-gray-700 mb-2">Tâches:</h5>
+                        <p class="text-gray-600" id="projectTasksCount"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <h5 class="font-medium text-gray-700 mb-2">Membres de l'équipe:</h5>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="projectMembersList">
+                        <!-- Les membres seront affichés ici -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            <button onclick="closeProjectModal()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fonction pour afficher les détails d'un projet
+    async function showProjectDetails(projectId) {
+        try {
+            // Récupérer les détails du projet depuis le serveur
+            const response = await fetch(`/get_project_details?project_id=${projectId}`);
+            const project = await response.json();
+
+            if (response.ok) {
+                // Mettre à jour le contenu de la modale
+                document.getElementById('projectModalTitle').textContent = project.name;
+                document.getElementById('projectName').textContent = project.name;
+                document.getElementById('projectDescription').textContent = project.description || 'Aucune description';
+
+                // Dates
+                document.getElementById('projectStartDate').textContent =
+                    project.start_date ? new Date(project.start_date).toLocaleDateString('fr-FR') : 'Non défini';
+                document.getElementById('projectEndDate').textContent =
+                    project.end_date ? new Date(project.end_date).toLocaleDateString('fr-FR') : 'Non défini';
+
+                // Statut
+                const statusElement = document.getElementById('projectStatus');
+                statusElement.textContent =
+                    project.status === 'active' ? 'Actif' :
+                        project.status === 'completed' ? 'Terminé' : 'En attente';
+
+                statusElement.className = 'px-2 py-1 text-xs font-medium rounded-full ' +
+                    (project.status === 'active' ? 'bg-green-100 text-green-800' :
+                        project.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800');
+
+                // Équipe
+                const teamDiv = document.getElementById('projectTeam');
+                if (project.team_details) {
+                    teamDiv.innerHTML = `
+                        <span class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
+                            ${project.team_details.name.substring(0, 2).toUpperCase()}
+                        </span>
+                        <span>${project.team_details.name}</span>
+                    `;
+                }
+
+                // Tâches
+                document.getElementById('projectTasksCount').textContent =
+                    `${project.tasks_count || 0} tâche(s)`;
+
+                // Membres
+                const membersList = document.getElementById('projectMembersList');
+                if (project.members && project.members.length > 0) {
+                    membersList.innerHTML = project.members.map(member => `
+                        <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                            <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                                ${member.prenom[0]}${member.nom[0]}
+                            </span>
+                            <div>
+                                <p class="text-sm font-medium">${member.prenom} ${member.nom}</p>
+                                <p class="text-xs text-gray-500">${member.username}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    membersList.innerHTML = '<p class="text-gray-500">Aucun membre</p>';
+                }
+
+                // Afficher la modale
+                document.getElementById('projectDetailsModal').classList.remove('hidden');
+            } else {
+                console.error('Erreur:', project.error);
+                alert('Impossible de charger les détails du projet');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue');
         }
     }
+
+    // Fonction pour fermer la modale
+    function closeProjectModal() {
+        document.getElementById('projectDetailsModal').classList.add('hidden');
+    }
+
+    // Fermer la modal en cliquant à l'extérieur
+    document.getElementById('projectDetailsModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('projectDetailsModal')) {
+            closeProjectModal();
+        }
+    });
 </script>
 {% endblock %}

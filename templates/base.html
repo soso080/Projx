@@ -8,6 +8,7 @@
     <meta name="keywords" content="Gestion, Projet, temps"/>
     <title>{% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/px.ico') }}">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <style>
         .alert-error {
@@ -40,7 +41,7 @@
                 <a href="{{ url_for('dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Dashboard</a>
                 <a href="{{url_for('project')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Projects</a>
                 <a href="{{url_for('team')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Team</a>
-                <a href="{{url_for('task')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Task</a>
+                <a href="{{url_for('calendrier')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Calendrier</a>
                 <a href="{{url_for('contact')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Contact</a>
             </div>
             <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
