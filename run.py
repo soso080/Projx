@@ -16,11 +16,15 @@ users = projx_db["users"]
 teams = projx_db["teams"]
 tasks = projx_db["tasks"]
 projects = projx_db["projects"]
+notifications = projx_db["notifications"]
+comments = projx_db["comments"]
 
 #les_Routes
 @app.route('/')
 def index():
-    return render_template('index.html')
+    if 'user_id' not in session:
+        return render_template('index.html')
+    return render_template('dashboard.html')
 
 @app.route('/signUp')
 def signUp():
@@ -37,6 +41,12 @@ def contact():
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'), 404
+
+@app.route('/notification')
+def notification():
+    if 'user_id' not in session:
+        return redirect(url_for('signIn'))
+    return render_template("notifications.html")
 
 @app.route('/dashboard')
 def dashboard():
