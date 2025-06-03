@@ -18,46 +18,73 @@
     </div>
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-green-600">Gestion des Équipes</h1>
-        <button onclick="document.getElementById('createTeamModal').classList.remove('hidden')"
-                class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+    <div class="mb-12 text-center">
+        <div class="max-w-md mx-auto">
+            <svg class="w-20 h-20 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
-            Nouvelle Équipe
-        </button>
+            <h1 class="text-4xl font-bold text-green-600 mt-4">Vos Équipes</h1>
+            <p class="text-gray-600 mt-2">Collaborez efficacement avec vos équipes</p>
+        </div>
     </div>
 
     <!-- Section Liste des équipes -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% if teams|length > 0 %}
-        <div class="divide-y divide-gray-200">
-            {% for team in teams %}
-            <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+        {% for team in teams %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800">{{ team.name }}</h3>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ team.name }}</h3>
                         {% if team.description %}
-                        <p class="mt-1 text-gray-600">{{ team.description }}</p>
+                        <p class="text-gray-600 mb-4">{{ team.description }}</p>
                         {% endif %}
-                        <div class="mt-3 flex items-center space-x-2">
-                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                                Chef: {{ users.find_one({"_id": team.chef}).prenom }} {{ users.find_one({"_id": team.chef}).nom }}
-                            </span>
-                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                                {{ team.members|length }} membre(s)
-                            </span>
+
+                        <!-- Avatar du chef -->
+                        <div class="flex items-center mb-4">
+                            <div class="relative">
+                                    <span class="w-10 h-10 rounded-full bg-blue-100 text-green-800 flex items-center justify-center font-bold">
+                                        {{ users.find_one({"_id": team.chef}).prenom[0] }}{{ users.find_one({"_id": team.chef}).nom[0] }}
+                                    </span>
+                                <span class="absolute -bottom-1 -right-1 bg-yellow-400 rounded-full w-4 h-4 flex items-center justify-center text-xs">👑</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Chef d'équipe</p>
+                                <p class="text-sm text-gray-500">{{ users.find_one({"_id": team.chef}).username }} </p>
+                            </div>
+                        </div>
+
+                        <!-- Membres -->
+                        <div class="flex -space-x-2 mb-4">
+                            {% for member in team.members[:5] %}
+                            {% set member_info = users.find_one({"_id": member}) %}
+                            <span class="w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center font-medium text-sm border-2 border-white">
+                                        {{ member_info.prenom[0] }}{{ member_info.nom[0] }}
+                                    </span>
+                            {% endfor %}
+                            {% if team.members|length > 5 %}
+                            <span class="w-8 h-8 rounded-full bg-gray-100 text-gray-800 flex items-center justify-center font-medium text-xs border-2 border-white">
+                                        +{{ team.members|length - 5 }}
+                                    </span>
+                            {% endif %}
                         </div>
                     </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-between items-center border-t pt-4">
+                    <span class="text-sm text-gray-500">{{ team.members|length }} membre(s)</span>
                     <div class="flex space-x-2">
-                        <button onclick="showTeamDetails('{{ team._id }}')" class="text-green-600 hover:text-green-800">
+                        <button onclick="showTeamDetails('{{ team._id }}')"
+                                class="text-green-600 hover:text-green-800 p-1 rounded-full hover:bg-green-50">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
                         </button>
-                        <a href="{{url_for('edit_team', team_id=team._id)}}" class="text-blue-600 hover:text-blue-800">
+                        <a href="{{url_for('edit_team', team_id=team._id)}}"
+                           class="text-gray-600 hover:text-gray-800 p-1 rounded-full hover:bg-gray-100">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                             </svg>
@@ -65,15 +92,32 @@
                     </div>
                 </div>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
+
+        <!-- Carte pour créer une nouvelle équipe -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden border-2 border-dashed border-gray-300 hover:border-green-500 transition-colors duration-300">
+            <div class="p-6 h-full flex flex-col items-center justify-center text-center">
+                <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-gray-900">Nouvelle équipe</h3>
+                <p class="mt-1 text-gray-500 mb-4">Créez une nouvelle équipe pour collaborer</p>
+                <button onclick="document.getElementById('createTeamModal').classList.remove('hidden')"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Créer une équipe
+                </button>
+            </div>
+        </div>
+
         {% else %}
-        <div class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- État vide -->
+        <div class="col-span-full text-center py-12 bg-white rounded-xl shadow-sm">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
-            <h3 class="mt-2 text-lg font-medium text-gray-900">Aucune équipe</h3>
-            <p class="mt-1 text-gray-500">Vous n'avez pas encore créé ou rejoint d'équipe.</p>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Aucune équipe</h3>
+            <p class="mt-2 text-gray-500">Commencez par créer votre première équipe</p>
             <div class="mt-6">
                 <button onclick="document.getElementById('createTeamModal').classList.remove('hidden')"
                         class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">

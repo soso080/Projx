@@ -9,14 +9,7 @@ from pymongo import MongoClient
 
 app = Flask(__name__)
 app.secret_key = 'd3480d181ced3ffb01213dc6274969c6'
-# app.config['MAIL_SERVER'] = 'smtp.example.com'  # Ex: smtp.gmail.com
-# app.config['MAIL_PORT'] = 587
-# app.config['MAIL_USE_TLS'] = True
-# app.config['MAIL_USERNAME'] = 'votre_email@example.com'
-# app.config['MAIL_PASSWORD'] = 'votre_mot_de_passe'
-# app.config['MAIL_DEFAULT_SENDER'] = 'votre_email@example.com'
-# mail = Mail(app)
-#bdd
+
 client_db = MongoClient("mongodb+srv://soso:soso@cluster0.ggd13ry.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 projx_db = client_db["projx"]
 users = projx_db["users"]
@@ -49,6 +42,7 @@ def page_not_found(error):
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('signIn'))
+
     return render_template("dashboard.html")
 
 
@@ -349,13 +343,28 @@ def get_user_projects():
         # Convertir ObjectId en string et formater les données
         projects_list = []
         for project in user_projects:
+            # Gérer le cas où tasks est une chaîne JSON
+            if isinstance(project.get('tasks'), str):
+                try:
+                    tasks_list = json.loads(project['tasks'])
+                    # Convertir les strings en ObjectId si nécessaire
+                    project['tasks'] = [ObjectId(task_id) if not isinstance(task_id, ObjectId) else task_id
+                                      for task_id in tasks_list]
+                except json.JSONDecodeError:
+                    project['tasks'] = []
+
             projects_list.append({
                 "_id": str(project["_id"]),
                 "name": project["name"],
+                "tasks": [str(task_id) for task_id in project.get("tasks", [])],
                 "description": project.get("description", ""),
                 "start_date": project.get("start_date", ""),
                 "end_date": project.get("end_date", ""),
-                "status": project.get("status", "active")
+                "status": project.get("status", "active"),
+                "team_id": str(project["team_id"]),
+                "created_at": project.get("created_at", ""),
+                "updated_at": project.get("updated_at", ""),
+                "team_name": teams.find_one({"_id": project["team_id"]})["name"],
             })
 
         return jsonify(projects_list)

@@ -16,98 +16,132 @@
     {% endwith %}
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-green-600">Gestion des Projets</h1>
-        <button onclick="document.getElementById('createProjectModal').classList.remove('hidden')"
-                class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+    <div class="mb-12 text-center">
+        <div class="max-w-md mx-auto">
+            <svg class="w-20 h-20 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
-            Nouveau Projet
-        </button>
+            <h1 class="text-4xl font-bold text-green-600 mt-4">Vos Équipes</h1>
+            <p class="text-gray-600 mt-2">Collaborez efficacement avec vos équipes</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+                <span class="text-sm font-medium text-gray-700">Filtrer :</span>
+                <button class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">Tous</button>
+                <button class="px-3 py-1 hover:bg-gray-100 rounded-full text-sm">Actifs</button>
+                <button class="px-3 py-1 hover:bg-gray-100 rounded-full text-sm">Terminés</button>
+            </div>
+            <button onclick="document.getElementById('createProjectModal').classList.remove('hidden')"
+                    class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Nouveau Projet
+            </button>
+        </div>
     </div>
 
     <!-- Liste des projets -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
         {% if projects|length > 0 %}
-        <div class="divide-y divide-gray-200">
-            {% for project in projects %}
-            <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-4">
-                            <h3 class="text-lg font-semibold text-gray-800">{{ project.name }}</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projet</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Équipe</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tâches</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                {% for project in projects %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                <span class="text-indigo-600 font-medium">{{ project.name[0:2] }}</span>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ project.name }}</div>
+                                {% if project.description %}
+                                <div class="text-sm text-gray-500 truncate max-w-xs">{{ project.description }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ project.team_details.name }}</div>
+                        <div class="text-sm text-gray-500">{{ project.team_details.members|length }} membres</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {{ project.start_date.strftime('%d/%m/%Y') if project.start_date else '-' }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            {{ project.end_date.strftime('%d/%m/%Y') if project.end_date else '-' }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-16 mr-2">
+                                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500" style="width: 60%"></div>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-700">
+                                    {{ project.tasks|length if project.tasks else 0 }}
+                                </span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs font-medium rounded-full
                                 {% if project.status == 'active' %}bg-green-100 text-green-800
-                                {% elif project.status == 'completed' %}bg-blue-100 text-blue-800
+                                {% elif project.status == 'completed' %}bg-green-100 text-green-800
                                 {% else %}bg-gray-100 text-gray-800{% endif %}">
                                 {{ 'Actif' if project.status == 'active' else 'Terminé' if project.status == 'completed' else 'En attente' }}
                             </span>
-                        </div>
-
-                        {% if project.description %}
-                        <p class="mt-2 text-gray-600">{{ project.description }}</p>
-                        {% endif %}
-
-                        <div class="mt-4 flex flex-wrap items-center gap-3">
-                            <span class="flex items-center text-sm text-gray-500">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                {{ project.start_date.strftime('%d/%m/%Y') if project.start_date else 'Non défini' }} -
-                                {{ project.end_date.strftime('%d/%m/%Y') if project.end_date else 'Non défini' }}
-                            </span>
-
-                            <span class="flex items-center text-sm text-gray-500">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                {{ project.team_details.name }}
-                            </span>
-
-                            <span class="flex items-center text-sm text-gray-500">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <a href="{{ url_for('task', project_id=project._id) }}" class="text-indigo-600 hover:text-indigo-900" title="Tâches">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                                 </svg>
-                                {{ project.tasks|length if project.tasks else 0 }} tâche(s)
-                            </span>
+                            </a>
+                            <button onclick="showProjectDetails('{{ project._id }}')" class="text-gray-600 hover:text-gray-900" title="Détails">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                            <a href="{{ url_for('edit_project', project_id=project._id) }}" class="text-yellow-600 hover:text-yellow-900" title="Modifier">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </a>
                         </div>
-                    </div>
-
-                    <div class="flex space-x-2">
-                        <a href="{{ url_for('task', project_id=project._id) }}" class="text-green-600 hover:text-green-800" title="Voir les tâches">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                            </svg>
-                        </a>
-
-                        <button onclick="showProjectDetails('{{ project._id }}')" class="text-blue-600 hover:text-blue-800" title="Détails">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                        </button>
-
-                        <a href="{{ url_for('edit_project', project_id=project._id) }}" class="text-yellow-600 hover:text-yellow-800" title="Modifier">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% else %}
         <div class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <h3 class="mt-2 text-lg font-medium text-gray-900">Aucun projet</h3>
-            <p class="mt-1 text-gray-500">Vous n'avez pas encore créé ou rejoint de projet.</p>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Aucun projet</h3>
+            <p class="mt-2 text-gray-500">Commencez par créer votre premier projet</p>
             <div class="mt-6">
                 <button onclick="document.getElementById('createProjectModal').classList.remove('hidden')"
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
@@ -290,7 +324,7 @@
 
                 statusElement.className = 'px-2 py-1 text-xs font-medium rounded-full ' +
                     (project.status === 'active' ? 'bg-green-100 text-green-800' :
-                        project.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800');
+                        project.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800');
 
                 // Équipe
                 const teamDiv = document.getElementById('projectTeam');
@@ -312,7 +346,7 @@
                 if (project.members && project.members.length > 0) {
                     membersList.innerHTML = project.members.map(member => `
                         <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
-                            <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                            <span class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
                                 ${member.prenom[0]}${member.nom[0]}
                             </span>
                             <div>

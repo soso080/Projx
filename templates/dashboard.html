@@ -28,7 +28,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Projets</p>
-                    <h3 class="text-2xl font-bold mt-1" id="projectsCount">Chargement...</h3>
+                    <h3 class="text-2xl font-bold mt-1" id="projectsCount">0</h3>
                 </div>
                 <div class="p-3 rounded-full bg-green-100 text-green-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,7 +49,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Équipes</p>
-                    <h3 class="text-2xl font-bold mt-1" id="teamsCount">Chargement...</h3>
+                    <h3 class="text-2xl font-bold mt-1" id="teamsCount">0</h3>
                 </div>
                 <div class="p-3 rounded-full bg-blue-100 text-blue-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,7 +70,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Tâches</p>
-                    <h3 class="text-2xl font-bold mt-1" id="tasksCount">Chargement...</h3>
+                    <h3 class="text-2xl font-bold mt-1" id="tasksCount">0</h3>
                     <p class="text-sm text-gray-500 mt-1"><span id="completedTasks">0</span> terminées</p>
                 </div>
                 <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
@@ -92,7 +92,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm font-medium">Projets en retard</p>
-                    <h3 class="text-2xl font-bold mt-1" id="lateProjectsCount">Chargement...</h3>
+                    <h3 class="text-2xl font-bold mt-1" id="lateProjectsCount">0</h3>
                 </div>
                 <div class="p-3 rounded-full bg-red-100 text-red-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,6 +106,34 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
             </a>
+        </div>
+    </div>
+
+    <!-- Graphique et activités récentes -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Graphique des tâches -->
+        <div class="bg-white rounded-lg shadow overflow-hidden lg:col-span-2">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Répartition des tâches</h2>
+            </div>
+            <div class="p-4">
+                <canvas id="taskStatusChart" height="250"></canvas>
+            </div>
+        </div>
+
+        <!-- Dernières activités -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Dernières activités</h2>
+            </div>
+            <div id="recentActivities" class="divide-y divide-gray-200">
+                <div class="p-6 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <p class="mt-2 text-gray-500">Chargement des activités...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -151,21 +179,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Graphique d'activité (placeholder) -->
-    <div class="mt-8 bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800">Activité récente</h2>
-            <select class="text-sm border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option>7 derniers jours</option>
-                <option>30 derniers jours</option>
-                <option>3 derniers mois</option>
-            </select>
-        </div>
-        <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
-            <p class="text-gray-500">Graphique d'activité à venir</p>
-        </div>
-    </div>
 </main>
 
 <script>
@@ -180,6 +193,7 @@
             if (projectsResponse.ok && tasksResponse.ok) {
                 const projects = await projectsResponse.json();
                 const tasks = await tasksResponse.json();
+                console.log("projects", projects);
 
                 // Mettre à jour les compteurs
                 document.getElementById('projectsCount').textContent = projects.length;
@@ -196,57 +210,133 @@
                 });
                 document.getElementById('lateProjectsCount').textContent = lateProjects.length;
 
-                // Afficher les projets récents (5 max)
+                // Graphique des statuts de tâches
+                const taskStatusData = {
+                    completed: tasks.filter(t => t.status === 'completed').length,
+                    in_progress: tasks.filter(t => t.status === 'in_progress').length,
+                    pending: tasks.filter(t => !['completed', 'in_progress'].includes(t.status)).length
+                };
+
+                const taskStatusChart = new Chart(
+                    document.getElementById('taskStatusChart'),
+                    {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Terminées', 'En cours', 'À faire'],
+                            datasets: [{
+                                data: [taskStatusData.completed, taskStatusData.in_progress, taskStatusData.pending],
+                                backgroundColor: [
+                                    'rgba(16, 185, 129, 0.8)',
+                                    'rgba(59, 130, 246, 0.8)',
+                                    'rgba(156, 163, 175, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(16, 185, 129, 1)',
+                                    'rgba(59, 130, 246, 1)',
+                                    'rgba(156, 163, 175, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.label}: ${context.raw} tâche(s)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+
+                // Dernières activités (exemple simplifié)
+                const recentActivities = [
+                    ...tasks.slice(0, 3).map(task => ({
+                        type: 'task',
+                        title: `Tâche "${task.title}" mise à jour`,
+                        date: new Date(task.updated_at || task.created_at),
+                        project: projects.find(p => p._id === task.project_id)?.name
+                    })),
+                    ...projects.slice(0, 2).map(project => ({
+                        type: 'project',
+                        title: `Projet "${project.name}" créé`,
+                        date: new Date(project.created_at),
+                        team: project.team_details?.name
+                    }))
+                ].sort((a, b) => b.date - a.date).slice(0, 5);
+
+                const recentActivitiesContainer = document.getElementById('recentActivities');
+                recentActivitiesContainer.innerHTML = recentActivities.map(activity => `
+                <div class="p-4 hover:bg-gray-50">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 mt-1">
+                            ${activity.type === 'task' ? `
+                                <svg class="h-5 w-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                            ` : `
+                                <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            `}
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900">${activity.title}</p>
+                            <p class="text-sm text-gray-500">${activity.project || activity.team || ''}</p>
+                            <p class="text-xs text-gray-400 mt-1">${activity.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+                // Projets récents (5 max)
                 const recentProjectsContainer = document.getElementById('recentProjects');
                 if (projects.length > 0) {
-                    const recentProjects = projects.slice(0, 5);
                     recentProjectsContainer.innerHTML = `
-                    <div class="divide-y divide-gray-200">
-                        ${recentProjects.map(project => `
-                            <div class="p-4 hover:bg-gray-50 transition-colors">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h3 class="font-medium text-gray-800">${project.name}</h3>
-                                        <p class="text-sm text-gray-500 mt-1">
-                                            ${project.team_details?.name || 'Aucune équipe'} •
-                                            ${project.tasks_count || 0} tâche(s)
-                                        </p>
-                                        <div class="mt-2 flex items-center text-sm text-gray-500">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                            </svg>
-                                            ${project.end_date ? new Date(project.end_date).toLocaleDateString('fr-FR') : 'Pas de date de fin'}
-                                        </div>
-                                    </div>
-                                    <span class="px-2 py-1 text-xs rounded-full ${
+                    <!-- Projets récents (5 max) -->
+<div class="divide-y divide-gray-200">
+    ${projects.slice(0, 5).map(project => `
+        <div class="p-4 hover:bg-gray-50 transition-colors">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="font-medium text-gray-800">${project.name}</h3>
+                    <p class="text-sm text-gray-500 mt-1">
+                        ${project.team_name || 'Aucune équipe'} •
+                        ${project.tasks.length || 0} tâche(s)
+                    </p>
+                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        ${project.end_date ? new Date(project.end_date).toLocaleDateString('fr-FR') : 'Pas de date de fin'}
+                    </div>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full ${
                         project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                             project.status === 'pending' ? 'bg-gray-100 text-gray-800' :
                                 'bg-green-100 text-green-800'
                     }">
-                                        ${project.status === 'completed' ? 'Terminé' :
+                    ${project.status === 'completed' ? 'Terminé' :
                         project.status === 'pending' ? 'En attente' : 'Actif'}
-                                    </span>
-                                </div>
-                                <a href="/task?project_id=${project._id}" class="mt-2 inline-block text-sm text-green-600 hover:text-green-800">
-                                    Voir les tâches →
-                                </a>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                } else {
-                    recentProjectsContainer.innerHTML = `
-                    <div class="p-6 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <h3 class="mt-2 text-lg font-medium text-gray-900">Aucun projet</h3>
-                        <p class="mt-1 text-gray-500">Commencez par créer votre premier projet.</p>
-                    </div>
+                </span>
+            </div>
+            <a href="/task?project_id=${project._id}" class="mt-2 inline-block text-sm text-green-600 hover:text-green-800">
+                Voir les tâches →
+            </a>
+        </div>
+    `).join('')}
+</div>
                 `;
                 }
 
-                // Afficher les tâches à venir (5 max)
+                // Tâches à venir (5 max)
                 const upcomingTasksContainer = document.getElementById('upcomingTasks');
                 const upcomingTasks = tasks
                     .filter(task => task.status !== 'completed' && task.due_date)
@@ -256,15 +346,17 @@
                 if (upcomingTasks.length > 0) {
                     upcomingTasksContainer.innerHTML = `
                     <div class="divide-y divide-gray-200">
-                        ${upcomingTasks.map(task => `
+                        ${upcomingTasks.map(task => {
+                        const project = projects.find(p => p._id === task.project_id);
+                        return `
                             <div class="p-4 hover:bg-gray-50 transition-colors">
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <h3 class="font-medium text-gray-800">${task.title}</h3>
-                                        <p class="text-sm text-gray-500 mt-1">${task.project_name || 'Aucun projet'}</p>
+                                        <p class="text-sm text-gray-500 mt-1">${project?.name || 'Aucun projet'}</p>
                                         <div class="mt-2 flex items-center text-sm ${
-                        new Date(task.due_date) < new Date() ? 'text-red-500' : 'text-gray-500'
-                    }">
+                            new Date(task.due_date) < new Date() ? 'text-red-500' : 'text-gray-500'
+                        }">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
@@ -273,52 +365,24 @@
                                         </div>
                                     </div>
                                     <span class="px-2 py-1 text-xs rounded-full ${
-                        task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                                'bg-gray-100 text-gray-800'
-                    }">
+                            task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-gray-100 text-gray-800'
+                        }">
                                         ${task.status === 'completed' ? 'Terminée' :
-                        task.status === 'in_progress' ? 'En cours' : 'À faire'}
+                            task.status === 'in_progress' ? 'En cours' : 'À faire'}
                                     </span>
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-                } else {
-                    upcomingTasksContainer.innerHTML = `
-                    <div class="p-6 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        <h3 class="mt-2 text-lg font-medium text-gray-900">Aucune tâche à venir</h3>
-                        <p class="mt-1 text-gray-500">Toutes vos tâches sont à jour ou aucune date n'est définie.</p>
+                            `;
+                    }).join('')}
                     </div>
                 `;
                 }
-            } else {
-                throw new Error('Erreur lors du chargement des données');
             }
         } catch (error) {
             console.error('Erreur:', error);
-            // Afficher un message d'erreur
-            document.getElementById('projectsCount').textContent = 'Erreur';
-            document.getElementById('teamsCount').textContent = 'Erreur';
-            document.getElementById('tasksCount').textContent = 'Erreur';
-            document.getElementById('completedTasks').textContent = 'Erreur';
-            document.getElementById('lateProjectsCount').textContent = 'Erreur';
-
-            document.getElementById('recentProjects').innerHTML = `
-            <div class="p-6 text-center text-red-500">
-                Impossible de charger les projets. Veuillez rafraîchir la page.
-            </div>
-        `;
-
-            document.getElementById('upcomingTasks').innerHTML = `
-            <div class="p-6 text-center text-red-500">
-                Impossible de charger les tâches. Veuillez rafraîchir la page.
-            </div>
-        `;
+            // Gestion des erreurs
         }
     });
 </script>
