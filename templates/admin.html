@@ -1,0 +1,703 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Projx{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<main class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Administration Panel</h1>
+            <p class="mt-2 text-sm text-gray-600">
+                Gestion complète de l'application
+            </p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-gray-500">Utilisateurs</h3>
+                <p class="mt-2 text-3xl font-bold" id="usersCount">Chargement...</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-gray-500">Équipes</h3>
+                <p class="mt-2 text-3xl font-bold" id="teamsCount">Chargement...</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-gray-500">Projets</h3>
+                <p class="mt-2 text-3xl font-bold" id="projectsCount">Chargement...</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-medium text-gray-500">Messages</h3>
+                <p class="mt-2 text-3xl font-bold" id="contactsCount">Chargement...</p>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button id="messagesTab" class="tab-button border-green-500 text-green-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Messages de contact
+                </button>
+                <button id="usersTab" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Gestion des utilisateurs
+                </button>
+                <button id="settingsTab" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Paramètres
+                </button>
+            </nav>
+        </div>
+
+        <!-- Messages Tab Content -->
+        <div id="messagesContent" class="tab-content">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Messages reçus
+                    </h3>
+                    <div class="flex items-center space-x-2">
+                        <select id="messageFilter" class="border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                            <option value="all">Tous les messages</option>
+                            <option value="question">Questions</option>
+                            <option value="support">Support</option>
+                            <option value="partnership">Partenariats</option>
+                            <option value="other">Autres</option>
+                        </select>
+                        <button id="refreshMessages" class="p-2 rounded-full hover:bg-gray-100">
+                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nom
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Email
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Sujet
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="messagesTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Messages will be loaded here -->
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                Chargement des messages...
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                    <nav class="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <button id="prevPage" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Précédent</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <span id="pageInfo" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            Page 1 sur 1
+                        </span>
+                        <button id="nextPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Suivant</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab Content -->
+        <div id="usersContent" class="tab-content hidden">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Gestion des utilisateurs
+                    </h3>
+                    <div class="flex items-center space-x-4">
+                        <input type="text" id="userSearch" placeholder="Rechercher un utilisateur..." class="border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
+                        <button id="addUserBtn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Ajouter un utilisateur
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nom
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Email
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Username
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Inscrit le
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Users will be loaded here -->
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                Chargement des utilisateurs...
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab Content -->
+        <div id="settingsContent" class="tab-content hidden">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Paramètres de l'application
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <form id="settingsForm">
+                        <div class="space-y-6">
+                            <div>
+                                <label for="appName" class="block text-sm font-medium text-gray-700">
+                                    Nom de l'application
+                                </label>
+                                <input type="text" id="appName" name="appName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                            </div>
+
+                            <div>
+                                <label for="maintenanceMode" class="block text-sm font-medium text-gray-700">
+                                    Mode maintenance
+                                </label>
+                                <select id="maintenanceMode" name="maintenanceMode" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
+                                    <option value="false">Désactivé</option>
+                                    <option value="true">Activé</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="contactEmail" class="block text-sm font-medium text-gray-700">
+                                    Email de contact
+                                </label>
+                                <input type="email" id="contactEmail" name="contactEmail" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                            </div>
+
+                            <div class="pt-5">
+                                <div class="flex justify-end">
+                                    <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        Annuler
+                                    </button>
+                                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        Enregistrer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div id="messageModal" class="fixed z-50 inset-0 overflow-y-auto hidden">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modalMessageTitle">
+                                Détails du message
+                            </h3>
+                            <div class="mt-4">
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Nom</p>
+                                        <p class="mt-1 text-sm text-gray-900" id="modalMessageName"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Email</p>
+                                        <p class="mt-1 text-sm text-gray-900" id="modalMessageEmail"></p>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <p class="text-sm font-medium text-gray-500">Sujet</p>
+                                    <p class="mt-1 text-sm text-gray-900" id="modalMessageSubject"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Message</p>
+                                    <p class="mt-1 text-sm text-gray-900 whitespace-pre-line" id="modalMessageContent"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="replyMessageBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Répondre
+                    </button>
+                    <button type="button" id="deleteMessageBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Supprimer
+                    </button>
+                    <button type="button" id="closeModalBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Tab switching
+        const tabs = {
+            messages: {
+                button: document.getElementById('messagesTab'),
+                content: document.getElementById('messagesContent')
+            },
+            users: {
+                button: document.getElementById('usersTab'),
+                content: document.getElementById('usersContent')
+            },
+            settings: {
+                button: document.getElementById('settingsTab'),
+                content: document.getElementById('settingsContent')
+            }
+        };
+
+        // Activate tab
+        function activateTab(tabName) {
+            // Deactivate all tabs
+            Object.keys(tabs).forEach(key => {
+                tabs[key].button.classList.remove('border-green-500', 'text-green-600');
+                tabs[key].button.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                tabs[key].content.classList.add('hidden');
+            });
+
+            // Activate selected tab
+            tabs[tabName].button.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            tabs[tabName].button.classList.add('border-green-500', 'text-green-600');
+            tabs[tabName].content.classList.remove('hidden');
+
+            // Load data if needed
+            if (tabName === 'messages') {
+                loadMessages();
+            } else if (tabName === 'users') {
+                loadUsers();
+            }
+        }
+
+        // Tab click events
+        tabs.messages.button.addEventListener('click', () => activateTab('messages'));
+        tabs.users.button.addEventListener('click', () => activateTab('users'));
+        tabs.settings.button.addEventListener('click', () => activateTab('settings'));
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch('/admin/stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('usersCount').textContent = data.users;
+                    document.getElementById('teamsCount').textContent = data.teams;
+                    document.getElementById('projectsCount').textContent = data.projects;
+                    document.getElementById('contactsCount').textContent = data.contacts;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Messages pagination
+        let currentPage = 1;
+        const messagesPerPage = 10;
+        let totalMessages = 0;
+        let currentFilter = 'all';
+
+        // Load messages
+        async function loadMessages(page = 1, filter = 'all') {
+            try {
+                document.getElementById('messagesTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        Chargement des messages...
+                    </td>
+                </tr>
+            `;
+
+                const response = await fetch(`/admin/messages?page=${page}&per_page=${messagesPerPage}&filter=${filter}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    totalMessages = data.total;
+                    currentPage = page;
+                    currentFilter = filter;
+
+                    renderMessages(data.messages);
+                    updatePagination();
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                document.getElementById('messagesTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-red-500">
+                        Erreur lors du chargement des messages
+                    </td>
+                </tr>
+            `;
+            }
+        }
+
+        // Render messages
+        function renderMessages(messages) {
+            if (messages.length === 0) {
+                document.getElementById('messagesTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        Aucun message trouvé
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            const tbody = document.getElementById('messagesTableBody');
+            tbody.innerHTML = '';
+
+            messages.forEach(message => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 cursor-pointer';
+                row.dataset.id = message._id;
+
+                // Format date
+                const messageDate = new Date(message.created_at);
+                const formattedDate = messageDate.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    ${message.name}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${message.email}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${getSubjectLabel(message.subject)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${formattedDate}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button class="text-green-600 hover:text-green-900 view-message mr-3" data-id="${message._id}">Voir</button>
+                    <button class="text-red-600 hover:text-red-900 delete-message" data-id="${message._id}">Supprimer</button>
+                </td>
+            `;
+
+                tbody.appendChild(row);
+            });
+
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-message').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    viewMessage(btn.dataset.id);
+                });
+            });
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-message').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteMessage(btn.dataset.id);
+                });
+            });
+
+            // Add click event to rows
+            document.querySelectorAll('#messagesTableBody tr').forEach(row => {
+                row.addEventListener('click', () => {
+                    viewMessage(row.dataset.id);
+                });
+            });
+        }
+
+        // Get subject label
+        function getSubjectLabel(subject) {
+            const subjects = {
+                'question': 'Question',
+                'support': 'Support',
+                'partnership': 'Partenariat',
+                'other': 'Autre'
+            };
+            return subjects[subject] || subject;
+        }
+
+        // Update pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(totalMessages / messagesPerPage);
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} sur ${totalPages}`;
+
+            // Disable/enable prev button
+            if (currentPage === 1) {
+                document.getElementById('prevPage').disabled = true;
+                document.getElementById('prevPage').classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                document.getElementById('prevPage').disabled = false;
+                document.getElementById('prevPage').classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Disable/enable next button
+            if (currentPage === totalPages) {
+                document.getElementById('nextPage').disabled = true;
+                document.getElementById('nextPage').classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                document.getElementById('nextPage').disabled = false;
+                document.getElementById('nextPage').classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // View message details
+        async function viewMessage(messageId) {
+            try {
+                const response = await fetch(`/admin/messages/${messageId}`);
+                if (response.ok) {
+                    const message = await response.json();
+
+                    // Fill modal with message data
+                    document.getElementById('modalMessageTitle').textContent = `Message: ${getSubjectLabel(message.subject)}`;
+                    document.getElementById('modalMessageName').textContent = message.name;
+                    document.getElementById('modalMessageEmail').textContent = message.email;
+                    document.getElementById('modalMessageSubject').textContent = getSubjectLabel(message.subject);
+                    document.getElementById('modalMessageContent').textContent = message.message;
+
+                    // Set data-id on delete button
+                    document.getElementById('deleteMessageBtn').dataset.id = messageId;
+
+                    // Show modal
+                    document.getElementById('messageModal').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error viewing message:', error);
+            }
+        }
+
+        // Delete message
+        async function deleteMessage(messageId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
+                try {
+                    const response = await fetch(`/admin/messages/${messageId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        loadMessages(currentPage, currentFilter);
+                        loadStats();
+                    }
+                } catch (error) {
+                    console.error('Error deleting message:', error);
+                }
+            }
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                document.getElementById('usersTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        Chargement des utilisateurs...
+                    </td>
+                </tr>
+            `;
+
+                const response = await fetch('/admin/users');
+                if (response.ok) {
+                    const users = await response.json();
+                    renderUsers(users);
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-red-500">
+                        Erreur lors du chargement des utilisateurs
+                    </td>
+                </tr>
+            `;
+            }
+        }
+
+        // Render users
+        function renderUsers(users) {
+            if (users.length === 0) {
+                document.getElementById('usersTableBody').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        Aucun utilisateur trouvé
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+
+                // Format date
+                const userDate = new Date(user.created_at);
+                const formattedDate = userDate.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+
+                row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <span class="text-green-800 font-medium">${user.prenom[0]}${user.nom[0]}</span>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">${user.prenom} ${user.nom}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${user.email}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${user.username}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    ${formattedDate}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button class="text-green-600 hover:text-green-900 edit-user mr-3" data-id="${user._id}">Éditer</button>
+                    <button class="text-red-600 hover:text-red-900 delete-user" data-id="${user._id}">Supprimer</button>
+                </td>
+            `;
+
+                tbody.appendChild(row);
+            });
+
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-user').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    editUser(btn.dataset.id);
+                });
+            });
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-user').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    deleteUser(btn.dataset.id);
+                });
+            });
+        }
+
+        // Edit user (placeholder)
+        function editUser(userId) {
+            alert(`Édition de l'utilisateur ${userId} - À implémenter`);
+        }
+
+        // Delete user (placeholder)
+        function deleteUser(userId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+                alert(`Suppression de l'utilisateur ${userId} - À implémenter`);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                loadMessages(currentPage - 1, currentFilter);
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            const totalPages = Math.ceil(totalMessages / messagesPerPage);
+            if (currentPage < totalPages) {
+                loadMessages(currentPage + 1, currentFilter);
+            }
+        });
+
+        document.getElementById('messageFilter').addEventListener('change', (e) => {
+            loadMessages(1, e.target.value);
+        });
+
+        document.getElementById('refreshMessages').addEventListener('click', () => {
+            loadMessages(currentPage, currentFilter);
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('messageModal').classList.add('hidden');
+        });
+
+        document.getElementById('deleteMessageBtn').addEventListener('click', (e) => {
+            deleteMessage(e.target.dataset.id);
+            document.getElementById('messageModal').classList.add('hidden');
+        });
+
+        document.getElementById('replyMessageBtn').addEventListener('click', () => {
+            const email = document.getElementById('modalMessageEmail').textContent;
+            window.location.href = `mailto:${email}`;
+        });
+
+        // Initialize
+        activateTab('messages');
+        loadStats();
+    });
+</script>
+
+<style>
+    .tab-button {
+        transition: all 0.2s ease;
+    }
+
+    .tab-content {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}

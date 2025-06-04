@@ -21,6 +21,7 @@ task_comments = projx_db["task_comments"]
 sprints = projx_db["sprints"]
 team_messages = projx_db["team_messages"]
 contacts = projx_db["contacts"]
+admin_collection = projx_db["admin"]
 
 #les_Routes
 @app.route('/')
@@ -233,6 +234,7 @@ def register():
                 "username": username,
                 "email": email,
                 "password": password_hash,
+                "is_admin": False,  # Nouveau champ
                 "created_at": datetime.now(UTC)
             })
 
@@ -277,6 +279,9 @@ def login():
             if not bcrypt.checkpw(password.encode('utf-8'), user['password']):
                 flash('Email ou mot de passe incorrect', 'error')
                 return redirect(url_for('signIn'))
+
+            if email == "admin@admin.com" and password == "Admin123456":
+                return redirect(url_for('admin'))
 
             # [5] Stockage en session (CONVERSION EN STRING)
             session['user_id'] = str(user['_id'])
@@ -1338,6 +1343,116 @@ def send_contact():
 
     return render_template("contact.html")
 
+
+# Ajoutez ces routes à votre fichier run.py
+
+@app.route('/admin')
+def admin_panel():
+    if 'user_id' not in session:
+        return redirect(url_for('signIn'))
+
+    # Vérifiez si l'utilisateur est admin (vous devrez ajouter un champ is_admin à votre modèle User)
+    user = users.find_one({"_id": ObjectId(session['user_id'])})
+    if not user.get('is_admin', False):
+        flash("Accès refusé : vous n'avez pas les droits d'administration", 'error')
+        return redirect(url_for('dashboard'))
+
+    return render_template("admin.html")
+
+
+@app.route('/admin/stats')
+def admin_stats():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    user = users.find_one({"_id": ObjectId(session['user_id'])})
+    if not user.get('is_admin', False):
+        return jsonify({"error": "Accès refusé"}), 403
+
+    stats = {
+        "users": users.count_documents({}),
+        "teams": teams.count_documents({}),
+        "projects": projects.count_documents({}),
+        "contacts": contacts.count_documents({})
+    }
+
+    return jsonify(stats)
+
+
+@app.route('/admin/messages')
+def admin_messages():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    user = users.find_one({"_id": ObjectId(session['user_id'])})
+    if not user.get('is_admin', False):
+        return jsonify({"error": "Accès refusé"}), 403
+
+    # Récupérer les paramètres de pagination et de filtre
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    filter_type = request.args.get('filter', 'all')
+
+    # Construire la requête en fonction du filtre
+    query = {}
+    if filter_type != 'all':
+        query = {"subject": filter_type}
+
+    # Compter le nombre total de messages
+    total = contacts.count_documents(query)
+
+    # Récupérer les messages paginés
+    messages = list(contacts.find(query)
+                    .sort("created_at", -1)
+                    .skip((page - 1) * per_page)
+                    .limit(per_page))
+
+    # Convertir ObjectId en string
+    for message in messages:
+        message['_id'] = str(message['_id'])
+
+    return jsonify({
+        "messages": messages,
+        "total": total,
+        "page": page,
+        "per_page": per_page
+    })
+
+
+@app.route('/admin/messages/<message_id>')
+def admin_message_detail(message_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    user = users.find_one({"_id": ObjectId(session['user_id'])})
+    if not user.get('is_admin', False):
+        return jsonify({"error": "Accès refusé"}), 403
+
+    message = contacts.find_one({"_id": ObjectId(message_id)})
+    if not message:
+        return jsonify({"error": "Message non trouvé"}), 404
+
+    message['_id'] = str(message['_id'])
+    return jsonify(message)
+
+
+@app.route('/admin/messages/<message_id>', methods=['DELETE'])
+def admin_delete_message(message_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    user = users.find_one({"_id": ObjectId(session['user_id'])})
+    if not user.get('is_admin', False):
+        return jsonify({"error": "Accès refusé"}), 403
+
+    result = contacts.delete_one({"_id": ObjectId(message_id)})
+    if result.deleted_count == 1:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"error": "Message non trouvé"}), 404
+
+
+@app.route
 
 @app.context_processor
 def inject_now():
