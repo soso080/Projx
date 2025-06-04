@@ -1194,6 +1194,124 @@ def create_notification(user_id, message, notification_type, sender_id=None, pro
     except Exception as e:
         app.logger.error(f"Erreur création notification: {str(e)}")
 
+
+# Route pour ajouter un commentaire à une tâche
+@app.route('/add_task_comment', methods=['POST'])
+def add_task_comment():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        data = request.get_json()
+
+        # Validation
+        if not all([data.get('task_id'), data.get('content')]):
+            return jsonify({"error": "Données manquantes"}), 400
+
+        # Vérifier que l'utilisateur a accès à la tâche
+        task = tasks.find_one({"_id": ObjectId(data['task_id'])})
+        if not task:
+            return jsonify({"error": "Tâche non trouvée"}), 404
+
+        project = projects.find_one({"_id": task['project_id']})
+        team = teams.find_one({"_id": project['team_id']})
+
+        if ObjectId(session['user_id']) not in team['members']:
+            return jsonify({"error": "Action non autorisée"}), 403
+
+        # Créer le commentaire
+        comment_data = {
+            "task_id": ObjectId(data['task_id']),
+            "user_id": ObjectId(session['user_id']),
+            "content": data['content'],
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC)
+        }
+
+        result = task_comments.insert_one(comment_data)
+        comment_id = str(result.inserted_id)
+
+        # Récupérer les infos de l'utilisateur pour la réponse
+        user = users.find_one({"_id": ObjectId(session['user_id'])})
+        user_info = {
+            "_id": str(user['_id']),
+            "prenom": user['prenom'],
+            "nom": user['nom'],
+            "username": user['username']
+        }
+
+        return jsonify({
+            "success": True,
+            "comment": {
+                "_id": comment_id,
+                "content": data['content'],
+                "created_at": comment_data['created_at'].isoformat(),
+                "user": user_info
+            }
+        })
+
+    except Exception as e:
+        app.logger.error(f"Erreur ajout commentaire: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
+
+# Route pour récupérer les commentaires d'une tâche
+@app.route('/get_task_comments')
+def get_task_comments():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    task_id = request.args.get('task_id')
+    if not task_id:
+        return jsonify({"error": "ID de tâche manquant"}), 400
+
+    try:
+        # Vérifier que l'utilisateur a accès à la tâche
+        task = tasks.find_one({"_id": ObjectId(task_id)})
+        if not task:
+            return jsonify({"error": "Tâche non trouvée"}), 404
+
+        project = projects.find_one({"_id": task['project_id']})
+        team = teams.find_one({"_id": project['team_id']})
+
+        if ObjectId(session['user_id']) not in team['members']:
+            return jsonify({"error": "Action non autorisée"}), 403
+
+        # Récupérer les commentaires avec les infos des utilisateurs
+        comments = list(task_comments.aggregate([
+            {"$match": {"task_id": ObjectId(task_id)}},
+            {"$sort": {"created_at": 1}},
+            {"$lookup": {
+                "from": "users",
+                "localField": "user_id",
+                "foreignField": "_id",
+                "as": "user"
+            }},
+            {"$unwind": "$user"},
+            {"$project": {
+                "content": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "user._id": 1,
+                "user.prenom": 1,
+                "user.nom": 1,
+                "user.username": 1
+            }}
+        ]))
+
+        # Convertir les dates et ObjectId
+        for comment in comments:
+            comment['_id'] = str(comment['_id'])
+            comment['user']['_id'] = str(comment['user']['_id'])
+            comment['created_at'] = comment['created_at'].isoformat()
+            comment['updated_at'] = comment['updated_at'].isoformat()
+
+        return jsonify(comments)
+
+    except Exception as e:
+        app.logger.error(f"Erreur récupération commentaires: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
 @app.context_processor
 def inject_now():
     return {'now': datetime.now()}

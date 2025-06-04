@@ -263,6 +263,34 @@
     </div>
 </div>
 
+<!-- Section Commentaires -->
+<div class="mt-8 bg-white rounded-lg shadow overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">Discussion sur la tâche</h3>
+    </div>
+
+    <div id="taskComments" class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+        <!-- Les commentaires seront chargés ici -->
+        <div class="p-6 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <p class="mt-2 text-gray-500">Chargement des commentaires...</p>
+        </div>
+    </div>
+
+    <div class="p-4 border-t border-gray-200">
+        <form id="commentForm" class="flex space-x-2">
+            <input type="hidden" id="commentTaskId" value="{{ tasks[0]._id if tasks else '' }}">
+            <input type="text" id="commentContent" placeholder="Ajouter un commentaire..." required
+                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Envoyer
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Modal de confirmation de suppression -->
 <div id="confirmDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
@@ -292,6 +320,96 @@
 </div>
 
 <script>
+
+    const taskComments = document.getElementById('taskComments');
+    const commentForm = document.getElementById('commentForm');
+    const commentContent = document.getElementById('commentContent');
+    const commentTaskId = document.getElementById('commentTaskId');
+
+
+    async function loadComments() {
+        try {
+            const response = await fetch(`/get_task_comments?task_id=${commentTaskId.value}`);
+            const comments = await response.json();
+
+            if (response.ok) {
+                if (comments.length > 0) {
+                    taskComments.innerHTML = comments.map(comment => `
+                        <div class="p-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0">
+                                    <span class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
+                                        ${comment.user.prenom[0]}${comment.user.nom[0]}
+                                    </span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm font-medium text-gray-900">
+                                            ${comment.user.prenom} ${comment.user.nom}
+                                        </p>
+                                        <span class="text-xs text-gray-500">
+                                            ${new Date(comment.created_at).toLocaleString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mt-1">${comment.content}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    taskComments.innerHTML = '<div class="p-6 text-center text-gray-500">Aucun commentaire</div>';
+                }
+            } else {
+                taskComments.innerHTML = '<div class="p-6 text-center text-red-500">Erreur de chargement</div>';
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            taskComments.innerHTML = '<div class="p-6 text-center text-red-500">Erreur de chargement</div>';
+        }
+    }
+
+    // Envoyer un commentaire
+    commentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const content = commentContent.value.trim();
+        if (!content) return;
+
+        try {
+            const response = await fetch('/add_task_comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    task_id: commentTaskId.value,
+                    content: content
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                commentContent.value = '';
+                loadComments();
+            } else {
+                alert(result.error || "Erreur lors de l'ajout du commentaire");
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert("Erreur technique");
+        }
+    });
+
+    // Charger les commentaires au départ
+    if (commentTaskId.value) {
+        loadComments();
+    }
     // Fonction pour afficher le modal d'édition avec les données de la tâche
     async function showEditTaskModal(taskId) {
         try {
