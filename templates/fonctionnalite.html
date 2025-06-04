@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Fonctionnalités - Projx{% endblock %}
+{% block content %}
+<main class="bg-white">
+    <!-- Hero -->
+    <div class="bg-green-700">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl sm:tracking-tight lg:text-6xl">
+                    Fonctionnalités puissantes
+                </h1>
+                <p class="mt-6 max-w-lg mx-auto text-xl text-green-100">
+                    Découvrez comment Projx peut transformer votre façon de travailler en équipe.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="py-12 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-green-600 font-semibold tracking-wide uppercase">Tout-en-un</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    Une plateforme complète
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                    Projx combine tous les outils dont vous avez besoin pour gérer vos projets efficacement.
+                </p>
+            </div>
+
+            <div class="mt-10">
+                <!-- Feature 1 -->
+                <div class="flex flex-col md:flex-row items-center mb-20">
+                    <div class="md:w-1/2 mb-8 md:mb-0 md:pr-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Gestion de projets visuelle</h3>
+                        <p class="text-gray-600 mb-4">
+                            Organisez vos projets avec des tableaux Kanban, des listes de tâches et des calendriers interactifs. Visualisez l'avancement de votre travail en un coup d'œil.
+                        </p>
+                        <ul class="text-gray-600 space-y-2">
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Tableaux Kanban personnalisables</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Vues liste, tableau et calendrier</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Filtres et recherches avancées</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="md:w-1/2">
+                        <img src="{{ url_for('static', filename='img/kanban-board.png') }}" alt="Tableau Kanban" class="rounded-lg shadow-lg border border-gray-200">
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="flex flex-col md:flex-row items-center mb-20">
+                    <div class="md:w-1/2 order-2 md:order-1 mt-8 md:mt-0 md:pr-8">
+                        <img src="{{ url_for('static', filename='img/collaboration.png') }}" alt="Collaboration d'équipe" class="rounded-lg shadow-lg border border-gray-200">
+                    </div>
+                    <div class="md:w-1/2 order-1 md:order-2 mb-8 md:mb-0 md:pl-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Collaboration en temps réel</h3>
+                        <p class="text-gray-600 mb-4">
+                            Travaillez ensemble comme jamais auparavant avec des outils de communication intégrés et des mises à jour en temps réel.
+                        </p>
+                        <ul class="text-gray-600 space-y-2">
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Commentaires et mentions</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Notifications personnalisables</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Historique des modifications</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="flex flex-col md:flex-row items-center mb-20">
+                    <div class="md:w-1/2 mb-8 md:mb-0 md:pr-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Reporting et analytics</h3>
+                        <p class="text-gray-600 mb-4">
+                            Obtenez des insights précieux sur la performance de votre équipe et l'avancement des projets avec nos outils d'analyse.
+                        </p>
+                        <ul class="text-gray-600 space-y-2">
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Tableaux de bord personnalisables</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Rapports d'avancement automatiques</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span>Export des données en PDF/Excel</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="md:w-1/2">
+                        <img src="{{ url_for('static', filename='img/analytics.png') }}" alt="Tableau de bord analytique" class="rounded-lg shadow-lg border border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="bg-green-50">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <h2 class="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                <span class="block">Prêt à essayer Projx?</span>
+                <span class="block text-green-600">Commencez votre essai gratuit aujourd'hui.</span>
+            </h2>
+            <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                <div class="inline-flex rounded-md shadow">
+                    <a href="{{ url_for('signUp') }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                        S'inscrire gratuitement
+                    </a>
+                </div>
+                <div class="ml-3 inline-flex rounded-md shadow">
+                    <a href="{{ url_for('contact') }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-green-600 bg-white hover:bg-green-50">
+                        Nous contacter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

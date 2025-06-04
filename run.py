@@ -30,6 +30,16 @@ def index():
         return render_template('index.html')
     return render_template('dashboard.html')
 
+@app.route("/fonctionnalite")
+def fonctionnalite():
+    return render_template('fonctionnalite.html')
+
+
+@app.route("/apropos")
+def apropos():
+    return render_template('apropos.html')
+
+
 @app.route('/signUp')
 def signUp():
     return render_template('signUp.html')
