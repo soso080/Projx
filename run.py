@@ -20,6 +20,7 @@ notifications = projx_db["notifications"]
 task_comments = projx_db["task_comments"]
 sprints = projx_db["sprints"]
 team_messages = projx_db["team_messages"]
+contacts = projx_db["contacts"]
 
 #les_Routes
 @app.route('/')
@@ -1311,6 +1312,32 @@ def get_task_comments():
     except Exception as e:
         app.logger.error(f"Erreur récupération commentaires: {str(e)}")
         return jsonify({"error": "Erreur serveur"}), 500
+
+@app.route('/send_contact', methods=['POST'])
+def send_contact():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        message = request.form.get('message', '').strip()
+        subject = request.form.get('subject', '').strip()
+
+        if not name or not email or not message or not subject:
+            flash('Tous les champs sont obligatoires.', 'error')
+            return redirect(url_for('contact'))
+
+        data = {
+            'name': name,
+            'email': email,
+            'subject': subject,
+            'message': message,
+        }
+        contacts.insert_one(data)
+
+        flash('Votre message a été envoyé avec succès!', 'success')
+        return render_template("contact.html")
+
+    return render_template("contact.html")
+
 
 @app.context_processor
 def inject_now():
