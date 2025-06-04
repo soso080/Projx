@@ -17,7 +17,9 @@ teams = projx_db["teams"]
 tasks = projx_db["tasks"]
 projects = projx_db["projects"]
 notifications = projx_db["notifications"]
-comments = projx_db["comments"]
+task_comments = projx_db["task_comments"]
+sprints = projx_db["sprints"]
+team_messages = projx_db["team_messages"]
 
 #les_Routes
 @app.route('/')
@@ -880,6 +882,15 @@ def create_task():
             {"$push": {"tasks": ObjectId(task_id)}}
         )
 
+        create_notification(
+            user_id=data['assigned_to'],
+            message=f"Une nouvelle tâche vous a été assignée: {data['title']}",
+            notification_type="task_assigned",
+            sender_id=session['user_id'],
+            project_id=data['project_id'],
+            task_id=str(task_id)
+        )
+
         return jsonify({"success": True, "message": "Tâche créée avec succès", "task_id": str(task_id)})
 
     except ValueError as e:
@@ -1074,6 +1085,14 @@ def delete_task(task_id):
                 {"_id": task['project_id']},
                 {"$pull": {"tasks": ObjectId(task_id)}}
             )
+
+            create_notification(
+                user_id=task['assigned_to'],
+                message=f"La tâche '{task['title']}' a été supprimée",
+                notification_type="task_deleted",
+                sender_id=session['user_id'],
+                project_id=str(task['project_id'])
+            )
             return jsonify({"success": True, "message": "Tâche supprimée avec succès"})
         else:
             return jsonify({"error": "Échec de la suppression"}), 500
@@ -1081,6 +1100,99 @@ def delete_task(task_id):
     except Exception as e:
         app.logger.error(f"Erreur suppression tâche: {str(e)}")
         return jsonify({"error": "Erreur serveur"}), 500
+
+
+# Ajoutez ces routes dans run.py
+
+@app.route('/get_notifications')
+def get_notifications():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        # Vérifier si on veut toutes les notifications ou seulement les non lues
+        all_notifications = request.args.get('all', 'false').lower() == 'true'
+
+        query = {"user_id": ObjectId(session['user_id'])}
+        if not all_notifications:
+            query["read"] = False
+
+        # Récupérer les notifications
+        user_notifications = list(notifications.find(query)
+                                  .sort("created_at", -1)
+                                  .limit(50 if all_notifications else 10))
+
+        # Convertir ObjectId en string
+        for notif in user_notifications:
+            notif['_id'] = str(notif['_id'])
+            notif['user_id'] = str(notif['user_id'])
+            if 'sender_id' in notif:
+                notif['sender_id'] = str(notif['sender_id'])
+            if 'project_id' in notif:
+                notif['project_id'] = str(notif['project_id'])
+            if 'task_id' in notif:
+                notif['task_id'] = str(notif['task_id'])
+
+        return jsonify(user_notifications)
+    except Exception as e:
+        app.logger.error(f"Erreur récupération notifications: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
+@app.route('/mark_notification_as_read/<notification_id>', methods=['POST'])
+def mark_notification_as_read(notification_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        result = notifications.update_one(
+            {"_id": ObjectId(notification_id), "user_id": ObjectId(session['user_id'])},
+            {"$set": {"read": True, "read_at": datetime.now(UTC)}}
+        )
+
+        if result.modified_count == 1:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"error": "Notification non trouvée"}), 404
+    except Exception as e:
+        app.logger.error(f"Erreur marquage notification: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
+@app.route('/mark_all_notifications_as_read', methods=['POST'])
+def mark_all_notifications_as_read():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        notifications.update_many(
+            {"user_id": ObjectId(session['user_id']), "read": False},
+            {"$set": {"read": True, "read_at": datetime.now(UTC)}}
+        )
+        return jsonify({"success": True})
+    except Exception as e:
+        app.logger.error(f"Erreur marquage notifications: {str(e)}")
+        return jsonify({"error": "Erreur serveur"}), 500
+
+# Fonction utilitaire pour créer des notifications
+def create_notification(user_id, message, notification_type, sender_id=None, project_id=None, task_id=None):
+    try:
+        notification_data = {
+            "user_id": ObjectId(user_id),
+            "message": message,
+            "type": notification_type,
+            "read": False,
+            "created_at": datetime.now(UTC)
+        }
+
+        if sender_id:
+            notification_data["sender_id"] = ObjectId(sender_id)
+        if project_id:
+            notification_data["project_id"] = ObjectId(project_id)
+        if task_id:
+            notification_data["task_id"] = ObjectId(task_id)
+
+        notifications.insert_one(notification_data)
+    except Exception as e:
+        app.logger.error(f"Erreur création notification: {str(e)}")
 
 @app.context_processor
 def inject_now():
