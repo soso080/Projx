@@ -23,12 +23,12 @@
         <div class="text-center">
             <h2 class="mt-6 text-3xl font-bold text-gray-900">Rejoignez l'aventure Projx</h2>
             <p class="mt-2 text-sm text-gray-600">
-                Déjà membre ? <a href="{{ url_for('signIn') }}" class="font-medium text-green-600 hover:text-green-500">Connectez-vous ici</a>
+                Déjà membre ? <a href="{{ url_for('auth.signin') }}" class="font-medium text-green-600 hover:text-green-500">Connectez-vous ici</a>
             </p>
             <p class="mt-1 text-xs text-gray-500">(Aucun permis de conduire requis, juste un esprit organisé)</p>
         </div>
 
-        <form class="mt-8 space-y-6" action="{{url_for('register')}}" method="POST">
+        <form class="mt-8 space-y-6" action="{{url_for('auth.register')}}" method="POST">
             <div class="rounded-md shadow-sm space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>

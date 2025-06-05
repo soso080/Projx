@@ -32,21 +32,21 @@
         <!-- Logo -->
         {% if session.user_id %}
         <div class="flex lg:flex-1">
-            <a href="{{url_for('dashboard')}}" class="-m-1.5 p-1.5">
+            <a href="{{url_for('main.dashboard')}}" class="-m-1.5 p-1.5">
                 <span class="sr-only">Projx</span>
                 <span class="text-2xl font-bold text-green-700">Projx</span>
             </a>
         </div>
             <!-- Navigation après connexion -->
             <div class="hidden lg:flex lg:gap-x-12">
-                <a href="{{ url_for('dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Dashboard</a>
-                <a href="{{url_for('project')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Projects</a>
-                <a href="{{url_for('team')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Team</a>
-                <a href="{{url_for('calendrier')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Calendrier</a>
-                <a href="{{url_for('contact')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Contact</a>
+                <a href="{{ url_for('main.dashboard') }}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Dashboard</a>
+                <a href="{{url_for('project.project')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Projects</a>
+                <a href="{{url_for('team.team')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Team</a>
+                <a href="{{url_for('main.calendrier')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Calendrier</a>
+                <a href="{{url_for('main.contact')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Contact</a>
             </div>
             <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-                <a href="{{url_for('moncompte')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600 flex items-center gap-2">
+                <a href="{{url_for('main.moncompte')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600 flex items-center gap-2">
                     <span class="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
                         {{ session.prenom[0]|upper }}{{ session.nom[0]|upper }}
                     </span>
@@ -70,34 +70,34 @@
                             </div>
                         </div>
                         <div class="p-2 border-t border-gray-200 bg-gray-50 text-center">
-                            <a href="{{ url_for('notification') }}" class="text-sm text-blue-600 hover:text-blue-800">Voir toutes les notifications</a>
+                            <a href="{{ url_for('notification.notification') }}" class="text-sm text-blue-600 hover:text-blue-800">Voir toutes les notifications</a>
                         </div>
                     </div>
                 </div>
-                <a href="{{ url_for('logout') }}" class="text-sm font-semibold leading-6 text-white bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg">
+                <a href="{{ url_for('auth.logout') }}" class="text-sm font-semibold leading-6 text-white bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg">
                     Déconnexion
                 </a>
             </div>
         {% else %}
             <!-- Navigation avant connexion -->
         <div class="flex lg:flex-1">
-            <a href="{{url_for('index')}}" class="-m-1.5 p-1.5">
+            <a href="{{url_for('main.index')}}" class="-m-1.5 p-1.5">
                 <span class="sr-only">Projx</span>
                 <span class="text-2xl font-bold text-green-700">Projx</span>
             </a>
         </div>
             <div class="hidden lg:flex lg:gap-x-12">
-                <a href="{{url_for('index')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Accueil</a>
-                <a href="{{url_for('fonctionnalite')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Fonctionnalités</a>
-                <a href="{{url_for('apropos')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">À propos</a>
+                <a href="{{url_for('main.index')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Accueil</a>
+                <a href="{{url_for('main.fonctionnalite')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">Fonctionnalités</a>
+                <a href="{{url_for('main.apropos')}}" class="text-sm font-semibold leading-6 text-gray-900 hover:text-green-600">À propos</a>
             </div>
 
             <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-                <a href="{{ url_for('signIn') }}"
+                <a href="{{ url_for('auth.signin') }}"
                    class="text-sm font-semibold leading-6 text-green-700 hover:text-green-800 px-4 py-2 rounded-lg hover:bg-green-50">
                     Connexion
                 </a>
-                <a href="{{ url_for('signUp') }}"
+                <a href="{{ url_for('auth.signup') }}"
                    class="text-sm font-semibold leading-6 text-white bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg">
                     Inscription
                 </a>

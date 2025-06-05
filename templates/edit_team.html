@@ -20,7 +20,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-green-600">Modifier l'Équipe</h1>
-        <a href="{{ url_for('team') }}" class="text-gray-600 hover:text-gray-800 flex items-center">
+        <a href="{{ url_for('team.team') }}" class="text-gray-600 hover:text-gray-800 flex items-center">
             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -80,7 +80,7 @@
                 </button>
 
                 <div class="space-x-3">
-                    <a href="{{ url_for('team') }}"
+                    <a href="{{ url_for('team.team') }}"
                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
                         Annuler
                     </a>
@@ -303,7 +303,7 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    window.location.href = "{{ url_for('team') }}?success=1";
+                    window.location.href = "{{ url_for('team.team') }}?success=1";
                 } else {
                     alert(result.error || "Erreur lors de la mise à jour de l'équipe");
                 }
@@ -325,7 +325,7 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = "{{ url_for('team') }}?deleted=1";
+                    window.location.href = "{{ url_for('team.team') }}?deleted=1";
                 } else {
                     const result = await response.json();
                     alert(result.error || "Erreur lors de la suppression");
