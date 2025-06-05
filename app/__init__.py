@@ -1,12 +1,18 @@
 # This file makes the app directory a Python package
 # It will initialize the Flask application
 
+import os
 from flask import Flask
 from app.models.database import init_db
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 def create_app():
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
-    app.secret_key = 'd3480d181ced3ffb01213dc6274969c6'
+    app.secret_key = SECRET_KEY
 
     # Initialize database
     init_db(app)

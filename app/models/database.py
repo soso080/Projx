@@ -1,7 +1,13 @@
 from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 # MongoDB connection
-client_db = MongoClient("mongodb+srv://soso:soso@cluster0.ggd13ry.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client_db = MongoClient(DATABASE_URL)
 projx_db = client_db["projx"]
 
 # Collections
