@@ -4,6 +4,7 @@ import json
 from datetime import datetime, UTC
 
 from app.models.team import Team
+from app.models.team_member import TeamMember
 from app.models.user import User
 
 # Create a blueprint for the team routes
@@ -33,8 +34,16 @@ def team():
 
         # Récupérer les infos de tous les membres
         team_dict['members_details'] = []
-        for member_id in team['members']:
-            member = User.find_by_id(member_id)
+
+        # Get team memberships
+        memberships = list(TeamMember.find_by_team(team['_id']))
+
+        # Create a members list for backward compatibility
+        team_dict['members'] = [membership['user_id'] for membership in memberships]
+
+        # Get member details
+        for membership in memberships:
+            member = User.find_by_id(membership['user_id'])
             if member:
                 team_dict['members_details'].append({
                     '_id': str(member['_id']),
@@ -62,8 +71,16 @@ def edit_team(team_id):
 
     # Récupérer les détails des membres
     member_details = []
-    for member_id in team['members']:
-        user = User.find_by_id(member_id)
+
+    # Get team memberships
+    memberships = list(TeamMember.find_by_team(team['_id']))
+
+    # Add members list for backward compatibility
+    team['members'] = [membership['user_id'] for membership in memberships]
+
+    # Get member details
+    for membership in memberships:
+        user = User.find_by_id(membership['user_id'])
         if user:
             member_details.append(user)
 
@@ -168,20 +185,39 @@ def update_team(team_id):
             return jsonify({"error": "Le nom de l'équipe est obligatoire"}), 400
 
         # 4. Gérer les membres (ajouts et suppressions)
-        current_members = set(team["members"])
-        members_to_remove = set(ObjectId(m) for m in data.get("membersToRemove", []))
-        new_members = set(ObjectId(m) for m in data.get("newMembers", []))
+        # Get current members from team_members collection
+        memberships = list(TeamMember.find_by_team(team['_id']))
+        current_members = set(str(membership['user_id']) for membership in memberships)
+
+        members_to_remove = set(data.get("membersToRemove", []))
+        new_members = set(data.get("newMembers", []))
 
         # Vérifier que le nouveau chef est toujours membre
-        if updates["chef"] not in (current_members - members_to_remove | new_members):
+        chef_id = str(updates["chef"])
+        if chef_id not in (current_members - members_to_remove | new_members):
             return jsonify({"error": "Le chef doit être membre de l'équipe"}), 400
 
-        # Mettre à jour la liste des membres
-        updated_members = list((current_members - members_to_remove) | new_members)
-        updates["members"] = updated_members
+        # Update the chef's role to "leader"
+        if chef_id != str(current_leader_id):
+            TeamMember.update_role(team_id, chef_id, "leader")
+            # If the previous leader is still a member, update their role to "member"
+            if str(current_leader_id) in current_members and str(current_leader_id) not in members_to_remove:
+                TeamMember.update_role(team_id, str(current_leader_id), "member")
 
         # 5. Appliquer les modifications dans MongoDB
+        # Update team basic info
         Team.update(team_id, updates)
+
+        # Add new members
+        for member_id in new_members:
+            if member_id not in current_members:
+                role = "leader" if member_id == chef_id else "member"
+                TeamMember.add_member(team_id, member_id, role)
+
+        # Remove members
+        for member_id in members_to_remove:
+            if member_id in current_members and member_id != chef_id:  # Don't remove the chef
+                TeamMember.remove_member(team_id, member_id)
 
         return jsonify({"success": True, "message": "Équipe mise à jour avec succès"})
 
@@ -234,8 +270,11 @@ def get_team_details():
         team['created_by'] = str(team['created_by'])
         team['chef'] = str(team['chef'])
 
-        # Convertir les ObjectId des membres
-        team['members'] = [str(member) for member in team['members']]
+        # Get team memberships
+        memberships = list(TeamMember.find_by_team(team['_id']))
+
+        # Create members list for backward compatibility
+        member_ids = [str(membership['user_id']) for membership in memberships]
 
         # Récupérer les infos du chef
         leader = User.find_by_id(team['chef'])
@@ -250,15 +289,19 @@ def get_team_details():
 
         # Récupérer les infos des membres
         members = []
-        for member_id in team['members']:
+        for membership in memberships:
+            member_id = membership['user_id']
             member = User.find_by_id(member_id)
             if member:
                 members.append({
                     '_id': str(member['_id']),
                     'nom': member['nom'],
                     'prenom': member['prenom'],
-                    'username': member['username']
+                    'username': member['username'],
+                    'role': membership.get('role', 'member')
                 })
+
+        # Add members list to team
         team['members'] = members
 
         return jsonify(team)

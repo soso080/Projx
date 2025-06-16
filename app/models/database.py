@@ -13,14 +13,12 @@ projx_db = client_db["projx"]
 # Collections
 users = projx_db["users"]
 teams = projx_db["teams"]
+team_members = projx_db["team_members"]
 tasks = projx_db["tasks"]
 projects = projx_db["projects"]
 notifications = projx_db["notifications"]
-task_comments = projx_db["task_comments"]
-sprints = projx_db["sprints"]
-team_messages = projx_db["team_messages"]
+project_comments = projx_db["project_comments"]  # New collection for project comments
 contacts = projx_db["contacts"]
-admin_collection = projx_db["admin"]
 
 def init_db(app):
     # This function can be used to initialize the database

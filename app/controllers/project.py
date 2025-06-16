@@ -4,6 +4,7 @@ from datetime import datetime, UTC
 
 from app.models.project import Project
 from app.models.team import Team
+from app.models.team_member import TeamMember
 from app.models.user import User
 
 # Create a blueprint for the project routes
@@ -65,7 +66,7 @@ def create_project():
         end_date = request.form.get('end_date')
         status = request.form.get('status', 'active')
 
-        # Validation
+        # Validation ;;
         if not name or not team_id:
             flash('Le nom et l\'équipe sont obligatoires', 'error')
             return redirect(url_for('project.project'))
@@ -117,14 +118,17 @@ def get_project_details():
 
             # Récupérer les membres de l'équipe
             members = []
-            for member_id in team['members']:
-                member = User.find_by_id(member_id)
+            # Get team memberships
+            memberships = list(TeamMember.find_by_team(team['_id']))
+            for membership in memberships:
+                member = User.find_by_id(membership['user_id'])
                 if member:
                     members.append({
                         '_id': str(member['_id']),
                         'nom': member['nom'],
                         'prenom': member['prenom'],
-                        'username': member['username']
+                        'username': member['username'],
+                        'role': membership.get('role', 'member')
                     })
             project['members'] = members
 
@@ -146,6 +150,100 @@ def get_project_details():
     except Exception as e:
         return jsonify({"error": "Erreur serveur"}), 500
 
+
+@project_bp.route('/add_project_comment', methods=['POST'])
+def add_project_comment():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    try:
+        data = request.get_json()
+
+        # Validation
+        if not all([data.get('project_id'), data.get('content')]):
+            return jsonify({"error": "Données manquantes"}), 400
+
+        # Vérifier que l'utilisateur a accès au projet
+        project = Project.find_by_id(data['project_id'])
+        if not project:
+            return jsonify({"error": "Projet non trouvé"}), 404
+
+        team = Team.find_by_id(project['team_id'])
+
+        if not TeamMember.is_member(team['_id'], session['user_id']):
+            return jsonify({"error": "Action non autorisée"}), 403
+
+        # Créer le commentaire
+        comment_id = Project.add_comment(data['project_id'], session['user_id'], data['content'])
+
+        # Récupérer les infos de l'utilisateur pour la réponse
+        user = User.find_by_id(session['user_id'])
+        user_info = {
+            "_id": str(user['_id']),
+            "prenom": user['prenom'],
+            "nom": user['nom'],
+            "username": user['username']
+        }
+
+        return jsonify({
+            "success": True,
+            "comment": {
+                "_id": str(comment_id),
+                "content": data['content'],
+                "created_at": datetime.now(UTC).isoformat(),
+                "user": user_info
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"error": "Erreur serveur"}), 500
+
+@project_bp.route('/get_project_comments')
+def get_project_comments():
+    if 'user_id' not in session:
+        return jsonify({"error": "Non autorisé"}), 401
+
+    project_id = request.args.get('project_id')
+    if not project_id:
+        return jsonify({"error": "ID de projet manquant"}), 400
+
+    try:
+        # Vérifier que l'utilisateur a accès au projet
+        project = Project.find_by_id(project_id)
+        if not project:
+            return jsonify({"error": "Projet non trouvé"}), 404
+
+        team = Team.find_by_id(project['team_id'])
+
+        if not TeamMember.is_member(team['_id'], session['user_id']):
+            return jsonify({"error": "Action non autorisée"}), 403
+
+        # Récupérer les commentaires
+        comments = Project.get_comments(project_id)
+
+        # Formater les commentaires pour la réponse
+        formatted_comments = []
+        for comment in comments:
+            user = User.find_by_id(comment['user_id'])
+            formatted_comment = {
+                "_id": str(comment['_id']),
+                "content": comment['content'],
+                "created_at": comment['created_at'].isoformat(),
+                "updated_at": comment['updated_at'].isoformat(),
+                "user": {
+                    "_id": str(user['_id']),
+                    "prenom": user['prenom'],
+                    "nom": user['nom'],
+                    "username": user['username']
+                }
+            }
+            formatted_comments.append(formatted_comment)
+
+        return jsonify(formatted_comments)
+
+    except Exception as e:
+        return jsonify({"error": "Erreur serveur"}), 500
+
 @project_bp.route('/update_project/<project_id>', methods=['PUT'])
 def update_project(project_id):
     if 'user_id' not in session:
@@ -161,7 +259,7 @@ def update_project(project_id):
         user_id = ObjectId(session['user_id'])
         team = Team.find_by_id(project['team_id'])
 
-        if user_id != project['created_by'] and user_id not in team['members']:
+        if user_id != project['created_by'] and not TeamMember.is_member(team['_id'], session['user_id']):
             return jsonify({"error": "Action non autorisée"}), 403
 
         # 2. Récupérer les données du formulaire
@@ -197,7 +295,7 @@ def update_project(project_id):
         if not new_team:
             return jsonify({"error": "Équipe non trouvée"}), 404
 
-        if user_id not in new_team['members'] and user_id != project['created_by']:
+        if not TeamMember.is_member(new_team['_id'], session['user_id']) and user_id != project['created_by']:
             return jsonify({"error": "Vous devez faire partie de la nouvelle équipe"}), 403
 
         # 5. Appliquer les modifications
@@ -225,7 +323,11 @@ def delete_project(project_id):
         user_id = ObjectId(session['user_id'])
         team = Team.find_by_id(project['team_id'])
 
-        if user_id != project['created_by'] and user_id != team['chef']:
+        # Check if user is creator or team leader
+        # Note: We still use team['chef'] as we keep this field in the team document
+        is_leader = user_id == team['chef']
+
+        if user_id != project['created_by'] and not is_leader:
             return jsonify({"error": "Action non autorisée"}), 403
 
         # 3. Supprimer le projet

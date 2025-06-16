@@ -1,6 +1,6 @@
 from bson import ObjectId
 from datetime import datetime, UTC
-from app.models.database import tasks, task_comments
+from app.models.database import tasks, project_comments as task_comments
 
 class Task:
     @staticmethod

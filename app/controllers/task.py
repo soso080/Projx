@@ -5,6 +5,7 @@ from datetime import datetime, UTC
 from app.models.task import Task
 from app.models.project import Project
 from app.models.team import Team
+from app.models.team_member import TeamMember
 from app.models.user import User
 from app.models.notification import Notification
 
@@ -42,9 +43,11 @@ def task():
     # Récupère les membres de l'équipe pour l'assignation
     team = Team.find_by_id(project['team_id'])
     team_members = []
-    if team and 'members' in team:
-        for member_id in team['members']:
-            member = User.find_by_id(member_id)
+    if team:
+        # Get team memberships
+        memberships = list(TeamMember.find_by_team(team['_id']))
+        for membership in memberships:
+            member = User.find_by_id(membership['user_id'])
             if member:
                 team_members.append(member)
 
@@ -71,7 +74,7 @@ def create_task():
             return jsonify({"error": "Projet non trouvé"}), 404
 
         team = Team.find_by_id(project['team_id'])
-        if ObjectId(session['user_id']) not in team['members']:
+        if not TeamMember.is_member(team['_id'], session['user_id']):
             return jsonify({"error": "Action non autorisée"}), 403
 
         # Créer la tâche
@@ -210,101 +213,6 @@ def delete_task(task_id):
             return jsonify({"success": True, "message": "Tâche supprimée avec succès"})
         else:
             return jsonify({"error": "Échec de la suppression"}), 500
-
-    except Exception as e:
-        return jsonify({"error": "Erreur serveur"}), 500
-
-@task_bp.route('/add_task_comment', methods=['POST'])
-def add_task_comment():
-    if 'user_id' not in session:
-        return jsonify({"error": "Non autorisé"}), 401
-
-    try:
-        data = request.get_json()
-
-        # Validation
-        if not all([data.get('task_id'), data.get('content')]):
-            return jsonify({"error": "Données manquantes"}), 400
-
-        # Vérifier que l'utilisateur a accès à la tâche
-        task = Task.find_by_id(data['task_id'])
-        if not task:
-            return jsonify({"error": "Tâche non trouvée"}), 404
-
-        project = Project.find_by_id(task['project_id'])
-        team = Team.find_by_id(project['team_id'])
-
-        if ObjectId(session['user_id']) not in team['members']:
-            return jsonify({"error": "Action non autorisée"}), 403
-
-        # Créer le commentaire
-        comment_id = Task.add_comment(data['task_id'], session['user_id'], data['content'])
-
-        # Récupérer les infos de l'utilisateur pour la réponse
-        user = User.find_by_id(session['user_id'])
-        user_info = {
-            "_id": str(user['_id']),
-            "prenom": user['prenom'],
-            "nom": user['nom'],
-            "username": user['username']
-        }
-
-        return jsonify({
-            "success": True,
-            "comment": {
-                "_id": str(comment_id),
-                "content": data['content'],
-                "created_at": datetime.now(UTC).isoformat(),
-                "user": user_info
-            }
-        })
-
-    except Exception as e:
-        return jsonify({"error": "Erreur serveur"}), 500
-
-@task_bp.route('/get_task_comments')
-def get_task_comments():
-    if 'user_id' not in session:
-        return jsonify({"error": "Non autorisé"}), 401
-
-    task_id = request.args.get('task_id')
-    if not task_id:
-        return jsonify({"error": "ID de tâche manquant"}), 400
-
-    try:
-        # Vérifier que l'utilisateur a accès à la tâche
-        task = Task.find_by_id(task_id)
-        if not task:
-            return jsonify({"error": "Tâche non trouvée"}), 404
-
-        project = Project.find_by_id(task['project_id'])
-        team = Team.find_by_id(project['team_id'])
-
-        if ObjectId(session['user_id']) not in team['members']:
-            return jsonify({"error": "Action non autorisée"}), 403
-
-        # Récupérer les commentaires
-        comments = Task.get_comments(task_id)
-        
-        # Formater les commentaires pour la réponse
-        formatted_comments = []
-        for comment in comments:
-            user = User.find_by_id(comment['user_id'])
-            formatted_comment = {
-                "_id": str(comment['_id']),
-                "content": comment['content'],
-                "created_at": comment['created_at'].isoformat(),
-                "updated_at": comment['updated_at'].isoformat(),
-                "user": {
-                    "_id": str(user['_id']),
-                    "prenom": user['prenom'],
-                    "nom": user['nom'],
-                    "username": user['username']
-                }
-            }
-            formatted_comments.append(formatted_comment)
-
-        return jsonify(formatted_comments)
 
     except Exception as e:
         return jsonify({"error": "Erreur serveur"}), 500

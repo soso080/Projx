@@ -5,6 +5,7 @@ import os
 from flask import Flask
 from app.models.database import init_db
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -37,7 +38,8 @@ def create_app():
     app.register_blueprint(contact_bp)
 
     # Context processor
-    from datetime import datetime
+
+
     @app.context_processor
     def inject_now():
         return {'now': datetime.now()}

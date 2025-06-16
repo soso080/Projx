@@ -17,7 +17,7 @@ def panel():
 
     # Vérifiez si l'utilisateur est admin
     user = User.find_by_id(session['user_id'])
-    if not user.get('is_admin', False):
+    if not user.get('is_admin', True):
         flash("Accès refusé : vous n'avez pas les droits d'administration", 'error')
         return redirect(url_for('main.dashboard'))
 
